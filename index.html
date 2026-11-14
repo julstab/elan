@@ -296,6 +296,9 @@ const O = '#FC5200', AMB = '#FFC24D', BLU = '#3FA7F5', CYA = '#8FE0F2', VIO = '#
 const COL = { run: O, velo: BLU, heures: AMB, charge: '#FF4D8D', vo2: '#2DD4BF', vfc: '#C084FC', fcr: '#FF6B6B', sommeil: '#7C8CFF', prepa: GRN, renfo: '#E879F9', poids: '#A3E635', cadence: '#22D3EE', rend: '#FACC15', scores: '#FF9F7A' };
 const colOf = id => COL[id] || COL[{ sl: 'sommeil', slh: 'sommeil', end: 'scores', hill: 'scores', wk: 'charge' }[id]] || O;
 const STRAVA = 'https://www.strava.com/activities/';
+// semaine sur le profil Strava : interval = année ISO + n° de semaine ISO (lue sur le jeudi)
+const STRAVA_WEEK = x => { const th = monday(x) + 3, y = toDate(th).getUTCFullYear(), w = Math.floor((th - dn(y + '-01-01')) / 7) + 1;
+  return `https://www.strava.com/athletes/59729022#interval?interval=${y}${String(w).padStart(2, '0')}&interval_type=week&chart_type=miles&year_offset=0`; };
 
 /* ---------- courses ---------- */
 const RACES = D.acts.filter(a => a.race).map(a => ({
@@ -562,10 +565,11 @@ function draw(host, spec, o = {}) {
   }
   const link = x => {
     if (x == null) return null; x = norm(x); if (x > TODAY + 3) return null; const p = spec.lp;
-    const a = spec.weekly ? D.acts.find(a => a.x >= x - 3 && a.x <= x + 3 && (!p || p(a))) : ((p && D.acts.find(a => a.x === x && p(a))) || D.acts.find(a => a.x === x));
-    return a && a.id ? a : null;
+    if (spec.weekly) return D.acts.some(a => a.x >= x - 3 && a.x <= x + 3 && a.id && (!p || p(a))) ? { href: STRAVA_WEEK(x), n: 'Voir la semaine sur Strava' } : null;
+    const a = (p && D.acts.find(a => a.x === x && p(a))) || D.acts.find(a => a.x === x);
+    return a && a.id ? { href: STRAVA + a.id, n: a.n, id: a.id } : null;
   };
-  const linkH = (a, pre) => `<a class="tl" href="${STRAVA}${a.id}" target="_blank" rel="noopener">${pre || ''}${esc(a.n)} ↗</a>`;
+  const linkH = (a, pre) => `<a class="tl" href="${a.href || STRAVA + a.id}" target="_blank" rel="noopener">${pre || ''}${esc(a.n)} ↗</a>`;
   function title(x) { x = norm(x); return spec.weekly ? 'Semaine du ' + fmtD(x - 3) + (x - 3 === CUR ? ' (en cours)' : x - 3 > CUR ? ' (prévue)' : '') : fmtDJ(x) + (x > TODAY ? ' (simulation)' : ''); }
   function show(x, silent) {
     if (x == null || !snaps.length) { cur.innerHTML = ''; tip.hidden = true; return; }
@@ -573,7 +577,7 @@ function draw(host, spec, o = {}) {
     cur.innerHTML = `<line class="cross" x1="${f(px)}" x2="${f(px)}" y1="${mt}" y2="${mt + ph}"/>` + rows.filter(r => r.y != null && !r.small).map(r => `<circle cx="${f(px)}" cy="${f(r.y)}" r="5" fill="${r.color}" stroke="var(--bg)" stroke-width="2"/>`).join('');
     if (silent) { tip.hidden = true; return; }
     const ev = (spec.events || []).filter(e => spec.weekly ? monday(e.x) + 3 === x : e.x === x), lk = link(x);
-    tip.innerHTML = `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && !ev.some(e => e.id === lk.id) ? linkH(lk, spec.weekly ? '1re activité : ' : '') : '');
+    tip.innerHTML = `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && !ev.some(e => e.id === lk.id) ? linkH(lk) : '');
     tip.hidden = false; const tw = tip.offsetWidth; let lf = px + 12; if (lf + tw > W) lf = px - 12 - tw; if (lf < 0) lf = Math.max(0, Math.min(W - tw, px - tw / 2)); tip.style.left = lf + 'px'; tip.style.top = (lf < px && lf + tw > px ? mt + ph * .45 : Math.max(0, mt - 4)) + 'px';
   }
   let lastX = null;
@@ -583,7 +587,7 @@ function draw(host, spec, o = {}) {
   const hide = () => { lastX = null; o.onHover ? o.onHover(null) : show(null); };
   let ptype = 'mouse';
   ov.addEventListener('pointermove', move); ov.addEventListener('pointerdown', e => { ptype = e.pointerType; move(e); });
-  ov.addEventListener('click', () => { const a = ptype === 'mouse' && link(lastX); if (a) window.open(STRAVA + a.id, '_blank', 'noopener'); });   // souris : clic direct ; tactile : lien dans l'infobulle
+  ov.addEventListener('click', () => { const a = ptype === 'mouse' && link(lastX); if (a) window.open(a.href, '_blank', 'noopener'); });   // souris : clic direct ; tactile : lien dans l'infobulle
   ov.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
   host._grp = o.group || null; HIDERS.add({ host, hide, group: o.group || null });
   return { show, at, title };
@@ -780,7 +784,7 @@ function renderFrise(app) {
   const hover = (x, lk) => {
     charts.forEach(c => { c.ch.show(x, true); const e = app.querySelector(`[data-rv="${c.id}"]`);
       if (x == null) e.textContent = e.dataset.def; else { const rows = c.ch.at(x), t = rows.find(r => r.tot); e.textContent = t ? t.txt : (rows.filter(r => !r.small).slice(0, 2).map(r => r.txt.split(' · ')[0]).join(' · ') || '–'); } });
-    cd.innerHTML = x == null ? esc(defDate) : esc(fmtDJ(x) + (x > TODAY ? ' · à venir' : '')) + (lk ? ` · <a class="tl" href="${STRAVA}${lk.id}" target="_blank" rel="noopener">${esc(lk.n)} ↗</a>` : '');
+    cd.innerHTML = x == null ? esc(defDate) : esc(fmtDJ(x) + (x > TODAY ? ' · à venir' : '')) + (lk ? ` · <a class="tl" href="${lk.href}" target="_blank" rel="noopener">${esc(lk.n)} ↗</a>` : '');
   };
   app.querySelectorAll('[data-chart]').forEach((e, i) => { const m = MID[e.dataset.chart], sp = specOf(m, R, { mode: modeOf(m), compare: false });
     charts.push({ id: m.id, ch: draw(e, sp, { h: i === on.length - 1 ? 128 : (i === 0 ? 124 : 104), xAxis: i === on.length - 1, evLabels: i === 0, ticks: 2, onHover: hover, group: 'frise' }) }); });
