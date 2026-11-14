@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%221%22 x2=%221%22 y2=%220%22%3E%3Cstop offset=%220%22 stop-color=%22%23FC5200%22/%3E%3Cstop offset=%221%22 stop-color=%22%23FFB347%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d=%22M14 5H43V34L34 43H5V14Z%22 fill=%22url%28%23g%29%22 stroke=%22url%28%23g%29%22 stroke-width=%224%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M10 30h6l3.5-7 4.5 12 6.5-21 4.5 11h3.5%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%224%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
 <title>Tableau de forme</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Oxanium:wght@400;500;600;700;800&display=swap">
@@ -412,7 +413,7 @@ const M = [
   {
     id: 'charge', title: "Charge d'entraînement", short: 'Charge', sim: true,
     views: [{ id: 'ac', l: 'Aiguë / chronique' }, { id: 'hebdo', l: 'Par semaine' }, { id: 'ratio', l: 'Ratio' }],
-    wk: weeklyM('wk', 'Charge hebdomadaire', [{ name: 'Charge Garmin', color: COL.charge, pred: a => a.ld != null }], [VLD], { fixed: 'barres' }),
+    wk: weeklyM('wk', 'Charge hebdomadaire', [{ name: 'Charge Garmin', color: COL.charge, pred: a => a.ld != null }], [VLD], { fixed: 'courbe' }),
     spec(R, s = {}) {
       if (s.view === 'hebdo') return this.wk.spec(R, s);
       if (s.view === 'ratio') return { dom: [R.x0, R.xe], fmt: v => nf(v, 1), ax: v => nf(v, 1), hband: { lo: .8, hi: 1.5, name: 'Zone optimale 0,8 – 1,5' }, lines: [{ name: 'Ratio aiguë / chronique', color: COL.charge, w: 2.5, pts: dayPts('rt', R.x0, R.x1) }, ...simL(R, 'rt', 'Ratio simulé', COL.charge)] };
