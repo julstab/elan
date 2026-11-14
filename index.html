@@ -404,11 +404,11 @@ function runsM(id, title, c) {
 
 const M = [
   weeklyM('run', 'Course à pied', [{ name: 'Route', color: O, pred: a => a.t === 'run' }, { name: 'Trail', color: AMB, pred: a => a.t === 'trail' }], [VKM, VH, VDP], { short: 'Course' }),
-  weeklyM('velo', 'Vélo', [{ name: 'Sorties route / VTT', color: BLU, pred: a => a.t === 'route' || a.t === 'vtt' }, { name: 'Home-trainer', color: VIO, pred: a => a.t === 'home' }, { name: 'Vélotaf', color: CYA, pred: a => a.t === 'velotaf' }], [VKM, VH, VDP], { mode: 'barres' }),
+  weeklyM('velo', 'Vélo', [{ name: 'Sorties route / VTT', color: BLU, pred: a => a.t === 'route' || a.t === 'vtt' }, { name: 'Home-trainer', color: VIO, pred: a => a.t === 'home' }, { name: 'Vélotaf', color: CYA, pred: a => a.t === 'velotaf' }], [VKM, VH, VDP]),
   weeklyM('heures', "Heures d'entraînement", [
     { name: 'Course route', color: O, pred: a => a.t === 'run' }, { name: 'Trail', color: AMB, pred: a => a.t === 'trail' },
     { name: 'Vélo', color: BLU, pred: a => a.t === 'route' || a.t === 'vtt' || a.t === 'home' }, { name: 'Vélotaf', color: CYA, pred: a => a.t === 'velotaf' },
-    { name: 'Renfo', color: VIO, pred: a => a.t === 'renfo' }, { name: 'Marche, rando, autres', color: GRN, pred: a => a.t === 'marche' || a.t === 'rando' || a.t === 'autre' }], [VH], { short: 'Heures', mode: 'barres', tot: 'Toutes activités' }),
+    { name: 'Renfo', color: VIO, pred: a => a.t === 'renfo' }, { name: 'Marche, rando, autres', color: GRN, pred: a => a.t === 'marche' || a.t === 'rando' || a.t === 'autre' }], [VH], { short: 'Heures', tot: 'Toutes activités' }),
   {
     id: 'charge', title: "Charge d'entraînement", short: 'Charge', sim: true,
     views: [{ id: 'ac', l: 'Aiguë / chronique' }, { id: 'hebdo', l: 'Par semaine' }, { id: 'ratio', l: 'Ratio' }],
@@ -737,7 +737,7 @@ function specOf(m, R, extra) {
   if (S.races) sp.events = (sp.events || []).concat(RACES.filter(r => r.x >= R.x0 && r.x <= R.x1));
   return sp;
 }
-const modeOf = m => S.mode[m.id] || (m.id === 'run' ? 'courbe' : 'barres');
+const modeOf = m => S.mode[m.id] || 'courbe';
 const ico = e => e ? `<span class="e" aria-hidden="true">${e}</span>` : '';
 const deltaH = d => d ? `<span class="delta">${d.dir > 0 ? '<i>▲</i>' : d.dir < 0 ? '<i>▼</i>' : ''}${esc(d.txt)}</span>` : '';
 const rangesH = () => `<div class="ranges" role="group" aria-label="Période">${RANGES.map(r => `<button data-range="${r.id}" class="${r.id === S.range ? 'on' : ''}">${r.l}</button>`).join('')}</div>`;
