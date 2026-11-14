@@ -155,7 +155,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 .rv { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--acc); }
 .rc { min-width: 0; }
 /* vue Records */
-.rtiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rtiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .rtile:first-child { grid-column: 1 / -1; }
 .rtile { display: flex; flex-direction: column; gap: 1px; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 11px 14px; color: var(--fg2); min-width: 0; transition: background .15s, border-color .15s; }
 .rtile:hover { border-color: #5a5a5f; }
 .rtile .rl { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
@@ -192,7 +192,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
   @keyframes pulse { 0% { transform: scale(.7); opacity: .4; } 70%, 100% { transform: scale(1.6); opacity: 0; } }
 }
 @media (min-width: 760px) {
-  .rtiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .rtiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rtile:first-child { grid-column: auto; }
   .row { grid-template-columns: 190px minmax(0, 1fr); gap: 16px; align-items: center; }
   .rh { flex-direction: column; align-items: flex-start; gap: 4px; }
   .rv { font-size: 22px; }
@@ -613,8 +613,7 @@ const REC = window.REC_DATA;
 const RDIST = {
   '21': { km: 21.0975, l: 'Semi-marathon', s: 'Semi', e: '🏅', c: '#2DD4BF', first: true },
   '10': { km: 10, l: '10 km', s: '10 km', e: '🚀', c: '#3FA7F5', first: true },
-  '5': { km: 5, l: '5 km', s: '5 km', e: '⚡', c: '#FC5200' },
-  'R': { km: 3.784, l: 'Relais', s: 'Relais', e: '🤝', c: '#FFC24D', first: true }
+  '5': { km: 5, l: '5 km', s: '5 km', e: '⚡', c: '#FC5200' }
 };
 const yrOf = iso => { const [y, m, d] = iso.split('-').map(Number); return y + (Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / DAY / 365.25; };
 const p2 = n => String(n).padStart(2, '0');
@@ -626,7 +625,7 @@ const fSc = r => r.sc ? ord(r.sc[0]) + ' / ' + nf(r.sc[1]) : '';
 const fCat = r => r.cat ? ord(r.cat.r) + (r.cat.n ? ' / ' + r.cat.n : '') + ' ' + r.cat.c + (MEDAL[r.cat.r] || '') : '';
 /* rp = record battu ce jour-là ; cur = record qui tient aujourd'hui */
 const RR = (() => {
-  const best = {}, L = REC.races.map(r => Object.assign({}, r, { y: yrOf(r.date), x: dn(r.date), km: RDIST[r.d].km, id: (D.recids || {})[r.date] }));
+  const best = {}, L = REC.races.filter(r => RDIST[r.d]).map(r => Object.assign({}, r, { y: yrOf(r.date), x: dn(r.date), km: RDIST[r.d].km, id: (D.recids || {})[r.date] }));
   L.forEach(r => { if (best[r.d] === undefined || r.t < best[r.d]) { r.rp = true; best[r.d] = r.t; } });
   L.forEach(r => { r.cur = r.t === best[r.d]; });
   return L;
@@ -720,7 +719,7 @@ function renderRecords(app) {
   ${p ? `<section class="card"><h2>${d === '21' ? '🌴 Semi de Cannes' : '📈 Projection'} · ${MOIS[tg[1] - 1]} ${tg[0]}</h2><p class="pj"><b>${fT(p.med)}</b><span class="muted">fourchette ${fT(p.lo)} – ${fT(p.hi)}</span></p>
     <details class="how"><summary>Comment la projection est calculée</summary><ul><li>Courbe à rendements décroissants ajustée sur les quatre 10 km officiels (Illkirch 2025 corrigé de son parcours sinueux).</li><li>5 km et semi déduits du 10 km par la formule de Riegel et les rapports entre distances mesurés en 2025-2026.</li><li>Âge : environ −0,6 % par an. Fourchette : de « tout s’aligne » à « année tournée vers le trail ».</li><li>Projection statistique, pas un objectif.</li></ul></details></section>` : ''}
   <section class="card"><h2>⏱️ Tous les chronos – ${cfg.s}</h2><div class="races">${byT.map((r, i) => `<div class="rrow${r.cur ? ' cur' : ''}"><span class="rd">${i + 1}</span><div><p class="rt"><b>${fT(r.t)}</b>${r.cur ? '<span class="rb now">🏆 RP actuel</span>' : r.rp ? '<span class="rb">Ancien RP</span>' : ''}${r.watch ? '<span class="rb">montre</span>' : ''}</p><p class="rn">${r.e ? r.e + ' ' : ''}${r.id ? `<a href="${STRAVA}${r.id}" target="_blank" rel="noopener">${esc(r.name)} ↗</a>` : esc(r.name)}</p><p class="rk">${esc([r.place, fmtD(r.x, true), r.detail].filter(Boolean).join(' · '))}</p></div><div class="rr"><span>${fSc(r) || (r.pending ? 'à venir' : '')}</span><span>${fCat(r)}</span></div></div>`).join('')}</div></section>
-  <p class="muted simn">Semi d’Illkirch 2023 en temps montre · relais : temps des 4 tours relevés par Julien · chronos à jour au ${fmtD(dn(REC.today), true)}.</p>`;
+  <p class="muted simn">Semi d’Illkirch 2023 en temps montre · chronos à jour au ${fmtD(dn(REC.today), true)}.</p>`;
   app.style.setProperty('--mc', C);
   drawRec(app.querySelector('#r-chart'), d);
 }
