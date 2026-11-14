@@ -111,6 +111,8 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .tl { color: var(--acc2); font-weight: 700; text-decoration: none; pointer-events: auto; }
 .tl:hover, .rn a:hover, a.rn:hover { text-decoration: underline; }
 .tip .tl { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid #4A4A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tip .tw { margin-top: 6px; border-top: 1px solid #4A4A4A; }
+.tip .ta { display: flex; gap: 8px; margin: 0; padding: 6px 0 0; border: 0; } .tip .ta span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; } .tip .ta em { font-style: normal; color: var(--fg2); font-weight: 600; }
 .cdate .tl { display: inline-block; max-width: min(46vw, 260px); overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 a.rn, .rn a { color: var(--fg); text-decoration: none; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--fg2); }
@@ -143,7 +145,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 /* vue Frise */
 .stick { position: sticky; top: calc(max(8px, env(safe-area-inset-top, 0px)) + 50px); z-index: 20; background: var(--bg); padding-block: 8px; margin-block: -8px; border-bottom: 1px solid var(--line); display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
 .stick .ranges { flex: 1; max-width: 420px; }
-.cdate { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; max-width: 100%; }
+.cdate { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .hint { margin-top: -4px; }
 .rows { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 6px 12px; }
 .row { display: grid; grid-template-columns: 1fr; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); min-width: 0; }
@@ -299,6 +301,8 @@ const STRAVA = 'https://www.strava.com/activities/';
 // semaine sur le profil Strava : interval = année ISO + n° de semaine ISO (lue sur le jeudi)
 const STRAVA_WEEK = x => { const th = monday(x) + 3, y = toDate(th).getUTCFullYear(), w = Math.floor((th - dn(y + '-01-01')) / 7) + 1;
   return `https://www.strava.com/athletes/59729022#interval?interval=${y}${String(w).padStart(2, '0')}&interval_type=week&chart_type=miles&year_offset=0`; };
+const jourC = x => JOURS[toDate(x).getUTCDay()];
+const actH = a => `<a class="tl ta" href="${STRAVA}${a.id}" target="_blank" rel="noopener"><span>${jourC(a.x)} ${esc(a.n)}</span>${a.km ? `<em>${nf(a.km, 1)} km</em>` : ''}</a>`;
 
 /* ---------- courses ---------- */
 const RACES = D.acts.filter(a => a.race).map(a => ({
@@ -563,9 +567,10 @@ function draw(host, spec, o = {}) {
       if (p && !p.skip) rows.push({ name: l.name, color: l.color, txt: fm(p.v) + (p.n ? ' · ' + p.n : ''), v: p.v, y: Y(p.v), dash: l.dash, small: l.dotsOnly }); });
     return rows;
   }
+  let ptype = 'mouse';
   const link = x => {
     if (x == null) return null; x = norm(x); if (x > TODAY + 3) return null; const p = spec.lp;
-    if (spec.weekly) return D.acts.some(a => a.x >= x - 3 && a.x <= x + 3 && a.id && (!p || p(a))) ? { href: STRAVA_WEEK(x), n: 'Voir la semaine sur Strava' } : null;
+    if (spec.weekly) { const L = D.acts.filter(a => a.x >= x - 3 && a.x <= x + 3 && a.id && (!p || p(a))); return L.length ? { href: STRAVA_WEEK(x), n: 'Voir la semaine sur Strava', acts: L } : null; }
     const a = (p && D.acts.find(a => a.x === x && p(a))) || D.acts.find(a => a.x === x);
     return a && a.id ? { href: STRAVA + a.id, n: a.n, id: a.id } : null;
   };
@@ -577,7 +582,7 @@ function draw(host, spec, o = {}) {
     cur.innerHTML = `<line class="cross" x1="${f(px)}" x2="${f(px)}" y1="${mt}" y2="${mt + ph}"/>` + rows.filter(r => r.y != null && !r.small).map(r => `<circle cx="${f(px)}" cy="${f(r.y)}" r="5" fill="${r.color}" stroke="var(--bg)" stroke-width="2"/>`).join('');
     if (silent) { tip.hidden = true; return; }
     const ev = (spec.events || []).filter(e => spec.weekly ? monday(e.x) + 3 === x : e.x === x), lk = link(x);
-    tip.innerHTML = `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && !ev.some(e => e.id === lk.id) ? linkH(lk) : '');
+    tip.innerHTML = `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && lk.acts ? `<div class="tw">${lk.acts.filter(a => !ev.some(e => e.id === a.id)).map(actH).join('')}</div>` + (ptype === 'mouse' ? '<div class="te">Clic : la semaine sur Strava</div>' : '') : lk && !ev.some(e => e.id === lk.id) ? linkH(lk) : '');
     tip.hidden = false; const tw = tip.offsetWidth; let lf = px + 12; if (lf + tw > W) lf = px - 12 - tw; if (lf < 0) lf = Math.max(0, Math.min(W - tw, px - tw / 2)); tip.style.left = lf + 'px'; tip.style.top = (lf < px && lf + tw > px ? mt + ph * .45 : Math.max(0, mt - 4)) + 'px';
   }
   let lastX = null;
@@ -585,7 +590,6 @@ function draw(host, spec, o = {}) {
     for (const sx of snaps) { const dd = Math.abs(sx - xv); if (dd < bd) { bd = dd; best = sx; } }
     if (best !== lastX) { lastX = best; const lk = link(best); ov.style.cursor = lk ? 'pointer' : ''; o.onHover ? o.onHover(best, lk) : show(best); } };
   const hide = () => { lastX = null; o.onHover ? o.onHover(null) : show(null); };
-  let ptype = 'mouse';
   ov.addEventListener('pointermove', move); ov.addEventListener('pointerdown', e => { ptype = e.pointerType; move(e); });
   ov.addEventListener('click', () => { const a = ptype === 'mouse' && link(lastX); if (a) window.open(a.href, '_blank', 'noopener'); });   // souris : clic direct ; tactile : lien dans l'infobulle
   ov.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
@@ -784,7 +788,7 @@ function renderFrise(app) {
   const hover = (x, lk) => {
     charts.forEach(c => { c.ch.show(x, true); const e = app.querySelector(`[data-rv="${c.id}"]`);
       if (x == null) e.textContent = e.dataset.def; else { const rows = c.ch.at(x), t = rows.find(r => r.tot); e.textContent = t ? t.txt : (rows.filter(r => !r.small).slice(0, 2).map(r => r.txt.split(' · ')[0]).join(' · ') || '–'); } });
-    cd.innerHTML = x == null ? esc(defDate) : esc(fmtDJ(x) + (x > TODAY ? ' · à venir' : '')) + (lk ? ` · <a class="tl" href="${lk.href}" target="_blank" rel="noopener">${esc(lk.n)} ↗</a>` : '');
+    cd.innerHTML = x == null ? esc(defDate) : esc(fmtDJ(x) + (x > TODAY ? ' · à venir' : '')) + (lk ? ' · ' + (lk.acts ? lk.acts.map(a => `<a class="tl" href="${STRAVA}${a.id}" target="_blank" rel="noopener">${jourC(a.x)} ${esc(a.n)}</a>`).join(' · ') : `<a class="tl" href="${lk.href}" target="_blank" rel="noopener">${esc(lk.n)} ↗</a>`) : '');
   };
   app.querySelectorAll('[data-chart]').forEach((e, i) => { const m = MID[e.dataset.chart], sp = specOf(m, R, { mode: modeOf(m), compare: false });
     charts.push({ id: m.id, ch: draw(e, sp, { h: i === on.length - 1 ? 128 : (i === 0 ? 124 : 104), xAxis: i === on.length - 1, evLabels: i === 0, ticks: 2, onHover: hover, group: 'frise' }) }); });
