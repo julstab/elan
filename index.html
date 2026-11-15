@@ -233,7 +233,13 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .adate b { font-size: 20px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; } .adate span { font-size: 11px; color: var(--fg2); }
 .abody { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .abody .rn a { color: var(--fg); text-decoration: none; } .anote { font-style: italic; }
 .aj { font-weight: 800; font-size: 14px; color: var(--fg2); font-variant-numeric: tabular-nums; padding-top: 2px; }
-.agap { font-size: 12px; color: var(--fg2); text-align: center; padding: 2px 0; border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); }
+/* inscrit : carte teintée en vert ; pas encore inscrit : contour en pointillés, texte un peu atténué */
+.arow { border-radius: 12px; padding: 10px; border: 1px dashed var(--line); }
+.arow.ins { background: color-mix(in srgb, #3DDC97 11%, transparent); border: 1px solid color-mix(in srgb, #3DDC97 45%, transparent); box-shadow: inset 4px 0 0 #3DDC97; }
+.arow:not(.ins) .abody .rn, .arow:not(.ins) .aj { opacity: .8; } .arow.ins .aj { color: #3DDC97; }
+.legend i.ains { background: color-mix(in srgb, #3DDC97 30%, transparent); border: 1px solid #3DDC97; } .legend i.aoth { border: 1px dashed var(--fg2); }
+.agap { margin: 4px 0; }
+.agap { font-size: 12px; color: var(--fg2); text-align: center; padding: 2px 0; }
 @media (min-width: 760px) {
   .tk { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .rtiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rtile:first-child { grid-column: auto; }
@@ -973,7 +979,7 @@ function renderAgenda(app) {
   AG.forEach((r, i) => { r.i = i; const k = r.d.slice(0, 7); (months[k] = months[k] || []).push(r); });
   const rowH = r => { const pv = AG[r.i - 1];
     return (pv ? `<p class="agap">↕ ${semaines(r.x - pv.x)} plus tard</p>` : '')
-      + `<div class="arow" id="ag-${r.i}"><div class="adate" style="--c:${r.ty.c}"><b>${toDate(r.x).getUTCDate()}</b><span>${JOURS[toDate(r.x).getUTCDay()]}</span></div>`
+      + `<div class="arow${r.statut === 'inscrit' ? ' ins' : ''}" id="ag-${r.i}"><div class="adate" style="--c:${r.ty.c}"><b>${toDate(r.x).getUTCDate()}</b><span>${JOURS[toDate(r.x).getUTCDay()]}</span></div>`
       + `<div class="abody"><p class="rn">${aName(r)}</p><p class="rk">${esc(r.lieu || '')}${r.est ? ' · date estimée' : ''}</p><div class="rchips">${aChips(r)}</div>${r.note ? `<p class="rk anote">${esc(r.note)}</p>` : ''}</div>`
       + `<div class="aj">J-${r.x - TODAY}</div></div>`; };
   app.innerHTML = enteteH() + `
@@ -981,7 +987,7 @@ function renderAgenda(app) {
     ${obj ? `<p class="muted">⭐ Objectif majeur : <b>${esc(obj.nom)}</b> ${jours(obj.x - TODAY)} (${fmtD(obj.x, true)}${obj.est ? ', date estimée' : ''}).</p>` : ''}</section>
   <section class="card"><h2>🗓️ Les mois à venir</h2><div id="ag-chart"></div>
     <div class="legend">${Object.values(ATYPE).map(t => `<span><i class="pt" style="--c:${t.c}"></i>${t.l}</span>`).join('')}<span>plein = inscrit</span><span>taille = km-effort</span></div></section>
-  <section class="card"><h2>📋 Dossards</h2>${Object.keys(months).map(k => { const [yy, mm] = k.split('-').map(Number); return `<div class="tyh"><h3>${MOISC[mm - 1]} ${yy}</h3><span>${months[k].length} course${months[k].length > 1 ? 's' : ''}</span></div>${months[k].map(rowH).join('')}`; }).join('')}</section>
+  <section class="card"><h2>📋 Dossards</h2><div class="legend"><span><i class="ains"></i>Inscrit</span><span><i class="aoth"></i>Pas encore inscrit</span></div>${Object.keys(months).map(k => { const [yy, mm] = k.split('-').map(Number); return `<div class="tyh"><h3>${MOISC[mm - 1]} ${yy}</h3><span>${months[k].length} course${months[k].length > 1 ? 's' : ''}</span></div>${months[k].map(rowH).join('')}`; }).join('')}</section>
   <p class="muted simn">Courses tirées de mes notes de saison et de ton calendrier Nolio (une course ajoutée sur Nolio apparaît ici toute seule). Dates estimées d'après les éditions précédentes tant que l'organisation ne les a pas publiées. Projection du semi : modèle de la vue Records ; repères trail : estimations, pas des objectifs.</p>`;
   app.style.setProperty('--mc', '#FC5200');
   drawAgenda(app.querySelector('#ag-chart'));
