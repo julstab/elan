@@ -276,6 +276,7 @@ const fmtD = (n, y) => { const d = toDate(n); return d.getUTCDate() + ' ' + MOIS
 const fmtDJ = n => JOURS[toDate(n).getUTCDay()] + ' ' + fmtD(n, true);
 const monday = n => n - ((toDate(n).getUTCDay() + 6) % 7);
 const nf = (v, d = 0) => v == null || isNaN(v) ? '–' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const PCH = (h, pc) => window.innerWidth >= 900 ? pc : h;
 const fmtH = h => { const m = Math.round(h * 60); return Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0'); };
 const fmtPace = p => { const s = Math.round(p * 60); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const fmtDur = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return (h ? h + ' h ' + String(m).padStart(2, '0') : m) + (h ? '' : ':' + String(ss).padStart(2, '0')); };
@@ -683,7 +684,7 @@ const rproj = (t, d) => {
 function drawRec(box, d) {
   const cfg = RDIST[d], C = cfg.c, K = REC.K[d], races = RR.filter(r => r.d === d);
   box.innerHTML = ''; box.classList.add('chart'); box._grp = null;
-  const W = Math.max(box.clientWidth, 260), H = 270, ml = 8, mr = 50, mt = 26, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
+  const W = Math.max(box.clientWidth, 260), H = PCH(270, 360), ml = 8, mr = 50, mt = 26, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
   const vals = races.map(r => r.t);
   if (K) for (let t = RNOW; t <= RX1 + 1e-9; t += .25) { const p = rproj(t, d); vals.push(p.lo, p.hi); }
   let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * .12 || 5; lo -= pad; hi += pad;
@@ -799,7 +800,7 @@ const niceStep = span => [.05, .1, .25, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1
 function drawTrails(box, v) {
   const P = TT.filter(r => v.val(r) != null); box.innerHTML = ''; box.classList.add('chart');
   if (!P.length) return;
-  const W = Math.max(box.clientWidth, 260), H = 250, ml = 8, mr = 58, mt = 14, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
+  const W = Math.max(box.clientWidth, 260), H = PCH(250, 340), ml = 8, mr = 58, mt = 14, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
   const vs = P.map(v.val), x0 = Math.floor(Math.min(...P.map(r => r.y))), x1 = Math.floor(Math.max(...P.map(r => r.y))) + 1;
   let lo = v.zero || v.inv ? 0 : Math.min(...vs), hi = Math.max(...vs); const st = niceStep(hi - lo);
   lo = v.zero || v.inv ? 0 : Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st; if (hi === lo) hi = lo + st;
@@ -1035,7 +1036,7 @@ function renderIndicateur(app) {
   <section class="card"><h2>Le reste en bref</h2><div class="brief">${M.filter(x => x.id !== S.m).map(x => { const k = x.head(R, stOf(x.id)); return `<button class="brow" data-m="${x.id}"><span class="bt">${ico(x.ico)}${x.short}</span><span class="bs" data-spark="${x.id}"></span><span class="bv"><b>${k.val}<small>${k.unit || ''}</small></b>${k.d && k.d.brief !== false ? deltaH(k.d) : ''}</span></button>`; }).join('')}</div></section>
   <section class="card"><h2>Courses</h2>${racesH(R)}</section>`;
   app.style.setProperty('--mc', m.col);
-  draw(app.querySelector('#a-chart'), sp, { h: 280 }); sparks(app, span(S.range));
+  draw(app.querySelector('#a-chart'), sp, { h: PCH(280, 380) }); sparks(app, span(S.range));
   app.querySelectorAll('.bl').forEach(p => { const t = e => { if (!e.target.closest('a')) p.classList.toggle('open'); }; p.addEventListener('click', t); p.addEventListener('keydown', e => { if (e.key === 'Enter') t(e); }); });
 }
 
