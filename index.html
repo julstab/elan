@@ -85,6 +85,14 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .hero > div:first-child { min-width: 0; }
 .hero .hd { text-align: right; margin-left: auto; max-width: 44%; } .hero .delta { font-size: 16px; }
 .hero .lbl { font-size: 12px; } .hero p.muted { font-size: 12px; } .big small { font-size: 16px; }
+/* vue Indicateur : total + écart (1/4) à gauche des résumés d'analyse (3/4) */
+.topgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: 8px; align-items: stretch; }
+.hero.hcol { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px; min-width: 0; padding: 8px 0; }
+.hcol .lbl { font-size: 10px; letter-spacing: .03em; line-height: 1.25; }
+.hcol .big { font-size: 22px; line-height: 1.05; overflow-wrap: anywhere; } .hcol .big small { display: block; font-size: 12px; font-weight: 700; color: var(--fg2); }
+.hcol .big, .hcol .lbl { text-align: left; } .hcol p.hdt, .hcol .hd span.muted { font-size: 10px; line-height: 1.25; }
+.topgrid .bl { -webkit-line-clamp: 3; line-clamp: 3; } .topgrid .brief2 { justify-content: center; }
+.hcol .hd { display: flex; flex-direction: column; gap: 1px; text-align: left; max-width: none; margin: 0; } .hcol .delta { font-size: 14px; } .hcol .hd .muted, .hcol .hdt { font-size: 10px; line-height: 1.25; }
 .brief2 { display: flex; flex-direction: column; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 13px; line-height: 1.4; color: var(--fg2); }
 .bl { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
 .bl.open { display: block; -webkit-line-clamp: unset; } .bl b { color: var(--fg); font-weight: 700; } .bl b a { color: var(--fg); text-decoration: none; } .bl .bd { color: var(--fg2); font-weight: 500; }
@@ -233,7 +241,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
   .rh { flex-direction: column; align-items: flex-start; gap: 4px; }
   .rv { font-size: 22px; }
   .chips.scroll.wrapd { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
-  h1 { font-size: 32px; } .hero .big { font-size: 36px; }
+  h1 { font-size: 32px; } .hero .big { font-size: 36px; } .hcol .big { font-size: 30px; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 
@@ -1016,9 +1024,8 @@ function renderIndicateur(app) {
   const m = MID[S.m], R = span(S.range, S.sim && m.sim), sp = specOf(m, R, { mode: modeOf(m) }), h = m.head(R, stOf(m.id));
   app.innerHTML = enteteH() + `
   <nav class="chips scroll" aria-label="Indicateur">${M.map(x => `<button class="chip${x.id === S.m ? ' on' : ''}" data-m="${x.id}">${ico(x.ico)}${x.short}</button>`).join('')}</nav>
-  <section class="hero"><div><p class="lbl">${esc(h.lbl)}</p><p class="big">${h.val}<small>${h.unit || ''}</small></p><p class="muted">${fmtD(R.x0, true)} – ${fmtD(R.x1, true)}</p></div>
-    ${h.d ? `<div class="hd">${deltaH(h.d)}<p class="muted">${esc(h.d.lbl)}</p></div>` : ''}</section>
-  ${briefH(m)}
+  <div class="topgrid"><section class="hero hcol"><p class="lbl">${esc(h.lbl)}</p><p class="big">${h.val}<small>${h.unit || ''}</small></p>${h.d ? `<p class="hd">${deltaH(h.d)}<span class="muted">${esc(h.d.lbl)}</span></p>` : ''}<p class="muted hdt">${fmtD(R.x0)} – ${fmtD(R.x1)}</p></section>
+  ${briefH(m)}</div>
   ${viewsH(m)}
   <div id="a-chart"></div>${legend(sp)}${simH(R)}
   ${rangesH()}
