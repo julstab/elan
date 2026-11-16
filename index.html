@@ -77,16 +77,12 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 
 /* chiffres */
 .lbl { font-size: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--fg2); }
-.big { font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
 .delta { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .delta i { font-style: normal; font-size: .7em; margin-right: .35em; color: var(--fg2); }
-.hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.hero > div:first-child { min-width: 0; }
-.hero .hd { text-align: right; margin-left: auto; max-width: 44%; } .hero .delta { font-size: 16px; }
-.hero .lbl { font-size: 12px; } .hero p.muted { font-size: 12px; } .big small { font-size: 16px; }
-/* vue Indicateur : total + écart en une ligne compacte, juste au-dessus de la courbe */
-.hero.hrow { align-items: flex-end; margin-top: 0; } .hrow .lbl { font-size: 11px; } .hrow .big { font-size: 24px; } .hrow .big small { font-size: 14px; }
-.hrow .hdt, .hrow .hd .muted { font-size: 11px; } .hrow .delta { font-size: 15px; }
+/* vue Indicateur : total (ou valeur) en haut à gauche de la courbe, sur un voile pour rester lisible ; l'infobulle passe au-dessus */
+.cwrap { position: relative; }
+.ctot { position: absolute; left: 4px; z-index: 1; pointer-events: none; display: flex; flex-direction: column; padding: 2px 8px 4px 4px; border-radius: 8px; background: color-mix(in srgb, var(--bg) 72%, transparent); }
+.ctot b { font-size: 22px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; } .ctot b small { font-size: 13px; } .ctot span { font-size: 11px; color: var(--fg2); }
 .brief2 { display: flex; flex-direction: column; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 13px; line-height: 1.4; color: var(--fg2); }
 .bl { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; cursor: pointer; }
 .bl.open { display: block; -webkit-line-clamp: unset; } .bl b { color: var(--fg); font-weight: 700; } .bl b a { color: var(--fg); text-decoration: none; } .bl .bd { color: var(--fg2); font-weight: 500; }
@@ -252,7 +248,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
   .rh { flex-direction: column; align-items: flex-start; gap: 4px; }
   .rv { font-size: 22px; }
   .chips.scroll.wrapd { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
-  h1 { font-size: 32px; } .hero .big { font-size: 36px; } .hrow .big { font-size: 28px; }
+  h1 { font-size: 32px; } .ctot b { font-size: 26px; }
 }
 @media (min-width: 1120px) {   /* boutons de l'Indicateur : 2 lignes pleine largeur, colonnes égales */
   .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
@@ -401,7 +397,7 @@ function weeklyM(id, title, stacks, views, c = {}) {
     },
     head(R, s = {}) {
       const v = V(s), wk = weekly(R.x0, R.w, any, v.val), cur = sum(wk.map(p => p.v));
-      const [val, unit] = v.big(cur), h = { lbl: 'Total – ' + v.l, val, unit };
+      const [val, unit] = v.big(cur), h = { lbl: 'Total – ' + v.l, val, unit, sub: R.on };
       const best = wk.reduce((a, b) => b.v > a.v ? b : a, wk[0]);
       h.note = `Tu as cumulé ${v.fmt(cur)} ${R.on}`;
       if (R.hasPrev) {
@@ -435,7 +431,7 @@ function dailyM(id, title, key, c) {
       const pts = main(R.x0, R.x1), raw = dayPts(key, R.x0, R.x1).map(p => p.v);
       if (!pts.length) return { lbl: title, val: '–', unit: '' };
       const a = pts[0].v, b = pts[pts.length - 1].v, df = b - a, parts = fmt(b).split(' ');
-      const h = { lbl: title + (c.avg ? ' – moyenne 7 jours' : ''), val: c.fmt ? fmt(b) : parts[0], unit: c.fmt ? '' : (c.unit || '') };
+      const h = { lbl: title + (c.avg ? ' – moyenne 7 jours' : ''), val: c.fmt ? fmt(b) : parts[0], unit: c.fmt ? '' : (c.unit || ''), sub: c.avg ? 'moyenne 7 jours' : 'au ' + fmtD(pts[pts.length - 1].x) };
       const dtxt = c.fmt ? fmt(Math.abs(df)) : nf(Math.abs(df), c.dec || 0) + (c.unit ? ' ' + c.unit : '');
       h.d = { txt: dtxt, dir: Math.abs(df) < Math.pow(10, -(c.dec || 0)) / 2 ? 0 : Math.sign(df), lbl: 'depuis le ' + fmtD(pts[0].x) };
       h.note = `${title} : ${fmt(b)} aujourd'hui${c.avg ? ' en moyenne sur 7 jours' : ''}, contre ${fmt(a)} le ${fmtD(pts[0].x)}. Sur la période : mini ${fmt(Math.min(...raw))}, maxi ${fmt(Math.max(...raw))}, moyenne ${fmt(sum(raw) / raw.length)}.` + (c.note ? ' ' + c.note(R, b) : '');
@@ -459,7 +455,7 @@ function runsM(id, title, c) {
       if (p.length < 3) return { lbl: title, val: '–', unit: '' };
       const r = rollN(p, 7), a = r[0].v, b = r[r.length - 1].v, df = b - a;
       const t = fmt(b).split(' ');
-      return { lbl: title + ' – ' + v.l.toLowerCase(), val: t[0], unit: t.slice(1).join(' '),
+      return { lbl: title + ' – ' + v.l.toLowerCase(), val: t[0], unit: t.slice(1).join(' '), sub: 'moyenne 7 sorties',
         d: { txt: fmt(Math.abs(df)), dir: Math.abs(df) < .5 && !v.invert ? 0 : Math.sign(df), lbl: 'depuis le ' + fmtD(r[0].x) },
         note: `${p.length} sorties sur la période. Moyenne glissante actuelle : ${fmt(b)}, contre ${fmt(a)} au début. ` + (v.note || c.note || '') };
     }
@@ -489,7 +485,7 @@ const M = [
       const last = [...D.days].reverse().find(d => d.ac != null), ac = dayPts('ac', R.x0, R.x1);
       const mx = ac.reduce((a, b) => b.v > a.v ? b : a, ac[0]);
       const pos = last.rt < .8 ? 'sous la zone optimale' : last.rt > 1.5 ? 'au-dessus de la zone optimale' : 'dans la zone optimale';
-      const h = s.view === 'ratio' ? { lbl: 'Ratio de charge aiguë / chronique', val: nf(last.rt, 1), unit: '' } : { lbl: 'Charge aiguë (7 jours)', val: nf(last.ac), unit: 'pts' };
+      const h = s.view === 'ratio' ? { lbl: 'Ratio de charge aiguë / chronique', val: nf(last.rt, 1), unit: '', sub: 'ratio aiguë / chronique' } : { lbl: 'Charge aiguë (7 jours)', val: nf(last.ac), unit: 'pts', sub: 'charge aiguë sur 7 jours' };
       h.d = { txt: 'ratio ' + nf(last.rt, 1), dir: 0, lbl: pos };
       h.note = `Charge aiguë ${nf(last.ac)} pour une charge chronique de ${nf(last.ch)} : ratio ${nf(last.rt, 1)}, ${pos} (${nf(last.cmin)} à ${nf(last.cmax)}). Pic de la période : ${nf(mx.v)} le ${fmtD(mx.x)}.`;
       if (R.ws && SIMC.length) { const e = SIMC[SIMC.length - 1], pk = SIMC.reduce((a, b) => b.ac > a.ac ? b : a); h.note += ` Simulation avec les séances prévues sur Nolio : pic de charge aiguë vers ${nf(pk.ac)} le ${fmtD(pk.x)}, puis ${nf(e.ac)} le ${fmtD(e.x)} pour une chronique à ${nf(e.ch)} (ratio ${nf(e.rt, 1)}).`; }
@@ -1052,9 +1048,7 @@ function renderIndicateur(app) {
   ${chipsH()}
   ${briefH(m)}
   ${viewsH(m, 'full')}
-  <div id="a-chart"></div>${legend(sp)}
-  <section class="hero hrow"><div><p class="lbl">${esc(h.lbl)}</p><p class="big">${h.val}<small>${h.unit || ''}</small></p><p class="muted hdt">${fmtD(R.x0, true)} – ${fmtD(R.x1, true)}</p></div>
-    ${h.d ? `<div class="hd">${deltaH(h.d)}<p class="muted">${esc(h.d.lbl)}</p></div>` : ''}</section>
+  <div class="cwrap"><div class="ctot" style="top:${(sp.events || []).length ? 28 : 14}px"><b>${h.val}<small>${h.unit || ''}</small></b>${h.sub ? `<span>${esc(h.sub)}</span>` : ''}</div><div id="a-chart"></div></div>${legend(sp)}
   ${rangesH()}
   <div class="opts">${R.hasPrev ? togH('compare', '🔁', 'Période précédente') : ''}${togH('races', '🏁', 'Courses')}${togH('sim', '📅', 'Mois suivant', !m.sim)}${modeH(m)}</div>
   <section class="card"><h2>Tes progrès en un coup d'œil</h2><p>${esc(h.note || '')}</p></section>
