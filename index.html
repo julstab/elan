@@ -41,9 +41,14 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 /* PPS : pastille sous la date (PC) ou à côté (téléphone) ; orange à moins de 30 jours de l'échéance, rouge une fois expiré */
 .hmeta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .pps { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--fg2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
-.pps b { color: var(--fg); font-variant-numeric: tabular-nums; letter-spacing: .03em; user-select: all; } .pps span { color: var(--fg3); }
-.pps.near { border-color: #FFC24D; } .pps.over { border-color: #FF6B6B; } .pps.over span { color: #FF6B6B; }
-@media (max-width: 759px) { .hmeta { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%; } }
+.pps b { color: var(--fg); font-variant-numeric: tabular-nums; letter-spacing: .03em; user-select: all; } .pps .pl, .pps .pc { color: var(--fg3); } .pps .pc { display: none; }
+.pps.near { border-color: #FFC24D; } .pps.over { border-color: #FF6B6B; } .pps.near .pc { color: #FFC24D; } .pps.over .pl, .pps.over .pc { color: #FF6B6B; }
+/* téléphone : PPS en haut à droite à côté du logo (numéro, puis date courte dessous) ; « Données au » passe sur la ligne suivante */
+@media (max-width: 759px) {
+  .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 8px; } .hmeta { display: contents; } .maj { grid-column: 1 / -1; }
+  .pps { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; border: 0; padding: 0; border-radius: 0; }
+  .pps .e, .pps .pl { display: none; } .pps .pc { display: block; font-size: 11px; }
+}
 
 /* navigation : barre flottante en verre dépoli, qui reste en haut de l'écran pendant le défilement */
 .dock { position: sticky; top: max(8px, env(safe-area-inset-top, 0px)); z-index: 30; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px;
@@ -1056,8 +1061,9 @@ function racesH(R) {
 const sparks = (root, R) => root.querySelectorAll('[data-spark]').forEach(e => draw(e, MID[e.dataset.spark].spec(R, { view: S.view[e.dataset.spark], mode: 'courbe' }), { spark: true, h: 34 }));
 const LOGO = `<svg class="logo" viewBox="0 0 48 48" width="46" height="46" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FC5200"/><stop offset="1" stop-color="#FFB347"/></linearGradient></defs><path d="M14 5H43V34L34 43H5V14Z" fill="url(#lg)" stroke="url(#lg)" stroke-width="4" stroke-linejoin="round"/><path d="M10 30h6l3.5-7 4.5 12 6.5-21 4.5 11h3.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const PPS = { n: 'P1A0E658745', fin: '2027-10-30' };   // Pass Prévention Santé FFA en cours (à refaire après cette date sur pps.athle.fr)
-const ppsH = () => { const x = dn(PPS.fin), lvl = TODAY > x ? ' over' : x - TODAY < 30 ? ' near' : '';
-  return `<p class="pps${lvl}" title="Pass Prévention Santé (FFA)">${ico('🩺')}PPS <b>${PPS.n}</b><span>${TODAY > x ? 'expiré le' : 'jusqu’au'} ${fmtD(x, true)}</span></p>`; };
+const ppsH = () => { const x = dn(PPS.fin), out = TODAY > x, lvl = out ? ' over' : x - TODAY < 30 ? ' near' : '', d = toDate(x),
+    court = [d.getUTCDate(), d.getUTCMonth() + 1, d.getUTCFullYear() % 100].map(v => String(v).padStart(2, '0')).join('/');   // date courte du téléphone
+  return `<p class="pps${lvl}" title="Pass Prévention Santé (FFA)">${ico('🩺')}<span class="pn">PPS <b>${PPS.n}</b></span><span class="pl">${out ? 'expiré le' : 'jusqu’au'} ${fmtD(x, true)}</span><span class="pc">${out ? 'expiré' : 'exp.'} ${court}</span></p>`; };
 const enteteH = () => `
   <header class="top"><div class="brand">${LOGO}<div><h1>ÉLAN</h1><p class="tag">Tableau de forme</p></div></div><div class="hmeta"><p class="muted maj">Données au ${fmtD(TODAY, true)}</p>${ppsH()}</div></header>
   <nav class="dock" aria-label="Vue">${VUES.map(([id, l, e]) => `<button data-ver="${id}" class="${S.ver === id ? 'on' : ''}" aria-pressed="${S.ver === id}">${ico(e)}${l}</button>`).join('')}</nav>`;
