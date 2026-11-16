@@ -123,6 +123,7 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .tip .tw { margin-top: 6px; border-top: 1px solid #4A4A4A; }
 .tip .tx { position: absolute; top: 0; right: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: 10px; color: var(--fg2); font-size: 15px; pointer-events: auto; cursor: pointer; }
 .tip .tx:hover, .tip .tx:active { color: var(--fg); background: rgba(255, 255, 255, .08); } .tip .tx + b { display: block; padding-right: 24px; }
+.tip .tpl, .cdate .tpl { color: var(--fg2); } .tip .tpl em { font-style: normal; font-weight: 600; }
 .tip .tds { margin: 2px 0 2px; font-size: 11.5px; line-height: 1.35; color: var(--fg2); }
 .tip .ta { display: flex; gap: 8px; margin: 0; padding: 6px 0 0; border: 0; } .tip .ta span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; } .tip .ta em { font-style: normal; color: var(--fg2); font-weight: 600; }
 .cdate .tl { display: inline-block; max-width: min(46vw, 260px); overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
@@ -252,6 +253,10 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
   .chips.scroll.wrapd { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
   h1 { font-size: 32px; } .hero .big { font-size: 36px; } .hrow .big { font-size: 28px; }
 }
+@media (min-width: 1120px) {   /* boutons de l'Indicateur : 2 lignes pleine largeur, colonnes égales */
+  .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
+  .chips.ind .chip { justify-content: center; min-width: 0; padding-inline: 6px; }
+}
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 
 </style>
@@ -328,7 +333,7 @@ const FOOT = r => r.te === 'RECOVERY' || r.te === 'AEROBIC_BASE';
 const med = a => { const v = a.filter(x => x != null && isFinite(x)).sort((x, y) => x - y); return v.length ? (v[(v.length - 1) >> 1] + v[v.length >> 1]) / 2 : 0; };
 const hab = (f, k) => { let A = D.acts.filter(a => !a.race && a.mn > 0 && a.x > TODAY - 84 && f(a)); if (A.length < 3) A = D.acts.filter(a => !a.race && a.mn > 0 && f(a)); return med(A.map(k)); };
 D.plan = (D.plan || []).map(p => {
-  const q = Object.assign({ x: dn(p.d) }, p), run = q.t === 'run' || q.t === 'trail', same = a => a.t === q.t, foot = a => a.t === 'run' && a.km > 3;
+  const q = Object.assign({ x: dn(p.d), kn: p.km }, p), run = q.t === 'run' || q.t === 'trail', same = a => a.t === q.t, foot = a => a.t === 'run' && a.km > 3;
   const cls = !run ? 0 : /^(EF|SL)(?![a-zé])/i.test(q.n) ? (/activ|tempo/i.test(q.n) ? 1 : 0) : 2;   // 0 footing, 1 sortie mixte, 2 séance
   const rate = hard => hab(a => foot(a) && a.ld && (hard ? !FOOT(a) : FOOT(a)), a => a.ld / a.mn);
   if (q.km == null) q.km = run || q.t === 'renfo' ? 0 : hab(same, a => a.km);
@@ -356,6 +361,7 @@ const STRAVA = 'https://www.strava.com/activities/';
 const STRAVA_WEEK = x => { const th = monday(x) + 3, y = toDate(th).getUTCFullYear(), w = Math.floor((th - dn(y + '-01-01')) / 7) + 1;
   return `https://www.strava.com/athletes/59729022#interval?interval=${y}${String(w).padStart(2, '0')}&interval_type=week&chart_type=miles&year_offset=0`; };
 const jourC = x => JOURS[toDate(x).getUTCDay()];
+const planH = p => `<div class="ta tpl"><span>${jourC(p.x)} ${esc(p.n)}</span>${p.kn ? `<em>${nf(p.kn, 1)} km</em>` : ''}</div>`;   // séance prévue sur Nolio (pas de lien)
 const actH = (a, det) => `<a class="tl ta" href="${STRAVA}${a.id}" target="_blank" rel="noopener"><span>${jourC(a.x)} ${esc(a.n)}</span>${a.km ? `<em>${nf(a.km, 1)} km</em>` : ''}</a>${det && a.ds ? `<p class="tds">${esc(a.ds).replace(/\n/g, '<br>')}</p>` : ''}`;
 
 /* ---------- courses ---------- */
@@ -599,8 +605,10 @@ function draw(host, spec, o = {}) {
   }
   let ptype = 'mouse';
   const link = x => {
-    if (x == null) return null; x = norm(x); if (x > TODAY + 3) return null; const p = spec.lp;
-    if (spec.weekly) { const L = D.acts.filter(a => a.x >= x - 3 && a.x <= x + 3 && a.id && (!p || p(a))); return L.length ? { href: STRAVA_WEEK(x), n: 'Voir la semaine sur Strava', acts: L } : null; }
+    if (x == null) return null; x = norm(x); const p = spec.lp;
+    if (spec.weekly) { const L = D.acts.filter(a => a.x >= x - 3 && a.x <= x + 3 && a.id && (!p || p(a))), P = D.plan.filter(a => a.x >= x - 3 && a.x <= x + 3 && (!p || p(a)));
+      return L.length || P.length ? { href: L.length ? STRAVA_WEEK(x) : null, n: 'Voir la semaine sur Strava', acts: L, plan: P } : null; }
+    if (x > TODAY + 3) return null;
     const a = (p && D.acts.find(a => a.x === x && p(a))) || D.acts.find(a => a.x === x);
     return a && a.id ? { href: STRAVA + a.id, n: a.n, id: a.id } : null;
   };
@@ -612,17 +620,17 @@ function draw(host, spec, o = {}) {
     cur.innerHTML = `<line class="cross" x1="${f(px)}" x2="${f(px)}" y1="${mt}" y2="${mt + ph}"/>` + rows.filter(r => r.y != null && !r.small).map(r => `<circle cx="${f(px)}" cy="${f(r.y)}" r="5" fill="${r.color}" stroke="var(--bg)" stroke-width="2"/>`).join('');
     if (silent) { tip.hidden = true; return; }
     const ev = (spec.events || []).filter(e => spec.weekly ? monday(e.x) + 3 === x : e.x === x), lk = link(x);
-    tip.innerHTML = (ptype === 'mouse' ? '' : '<button class="tx" aria-label="Fermer">✕</button>') + `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && lk.acts ? `<div class="tw">${lk.acts.filter(a => !ev.some(e => e.id === a.id)).map(a => actH(a, spec.detail)).join('')}</div>` + (ptype === 'mouse' ? '<div class="te">Clic : la semaine sur Strava</div>' : '') : lk && !ev.some(e => e.id === lk.id) ? linkH(lk) : '');
+    tip.innerHTML = (ptype === 'mouse' ? '' : '<button class="tx" aria-label="Fermer">✕</button>') + `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && lk.acts ? `<div class="tw">${lk.acts.filter(a => !ev.some(e => e.id === a.id)).map(a => actH(a, spec.detail)).join('')}${lk.plan.map(planH).join('')}</div>` + (ptype === 'mouse' && lk.href ? '<div class="te">Clic : la semaine sur Strava</div>' : '') : lk && !ev.some(e => e.id === lk.id) ? linkH(lk) : '');
     const tx = tip.querySelector('.tx'); if (tx) tx.addEventListener('click', hide);
     tip.hidden = false; const tw = tip.offsetWidth; let lf = px + 12; if (lf + tw > W) lf = px - 12 - tw; if (lf < 0) lf = Math.max(0, Math.min(W - tw, px - tw / 2)); tip.style.left = lf + 'px'; tip.style.top = (lf < px && lf + tw > px ? mt + ph * .45 : Math.max(0, mt - 4)) + 'px';
   }
   let lastX = null;
   const move = e => { const r = svg.getBoundingClientRect(), xv = d0 + (e.clientX - r.left - ml) / pw * (d1 - d0); let best = null, bd = 1e9;
     for (const sx of snaps) { const dd = Math.abs(sx - xv); if (dd < bd) { bd = dd; best = sx; } }
-    if (best !== lastX) { lastX = best; const lk = link(best); ov.style.cursor = lk ? 'pointer' : ''; o.onHover ? o.onHover(best, lk) : show(best); } };
+    if (best !== lastX) { lastX = best; const lk = link(best); ov.style.cursor = lk && lk.href ? 'pointer' : ''; o.onHover ? o.onHover(best, lk) : show(best); } };
   const hide = () => { lastX = null; o.onHover ? o.onHover(null) : show(null); };
   ov.addEventListener('pointermove', move); ov.addEventListener('pointerdown', e => { ptype = e.pointerType; move(e); });
-  ov.addEventListener('click', () => { const a = ptype === 'mouse' && link(lastX); if (a) window.open(a.href, '_blank', 'noopener'); });   // souris : clic direct ; tactile : lien dans l'infobulle
+  ov.addEventListener('click', () => { const a = ptype === 'mouse' && link(lastX); if (a && a.href) window.open(a.href, '_blank', 'noopener'); });   // souris : clic direct ; tactile : lien dans l'infobulle
   ov.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
   host._grp = o.group || null; HIDERS.add({ host, hide, group: o.group || null });
   return { show, at, title };
@@ -1033,7 +1041,7 @@ const enteteH = () => `
   <nav class="dock" aria-label="Vue">${VUES.map(([id, l, e]) => `<button data-ver="${id}" class="${S.ver === id ? 'on' : ''}" aria-pressed="${S.ver === id}">${ico(e)}${l}</button>`).join('')}</nav>`;
 
 /* ---------- vue Indicateur : un indicateur à la fois ---------- */
-const chipsH = () => `<nav class="chips scroll wrapd" aria-label="Indicateur">${M.map(x => `<button class="chip${x.id === S.m ? ' on' : ''}" data-m="${x.id}">${ico(x.ico)}${x.short}</button>`).join('')}<button class="chip${S.m === 'chaussures' ? ' on' : ''}" data-m="chaussures">${ico('👟')}Chaussures</button></nav>`;
+const chipsH = () => `<nav class="chips scroll wrapd ind" style="--cols:${Math.ceil((M.length + 1) / 2)}" aria-label="Indicateur">${M.map(x => `<button class="chip${x.id === S.m ? ' on' : ''}" data-m="${x.id}">${ico(x.ico)}${x.short}</button>`).join('')}<button class="chip${S.m === 'chaussures' ? ' on' : ''}" data-m="chaussures">${ico('👟')}Chaussures</button></nav>`;
 function renderIndicateur(app) {
   if (S.m === 'chaussures') return renderShoes(app);
   const m = MID[S.m], R = span(S.range, S.sim && m.sim), sp = specOf(m, R, { mode: modeOf(m) }), h = m.head(R, stOf(m.id));
@@ -1068,7 +1076,7 @@ function renderFrise(app) {
   const hover = (x, lk) => {
     charts.forEach(c => { c.ch.show(x, true); const e = app.querySelector(`[data-rv="${c.id}"]`);
       if (x == null) e.textContent = e.dataset.def; else { const rows = c.ch.at(x), t = rows.find(r => r.tot); e.textContent = t ? t.txt : (rows.filter(r => !r.small).slice(0, 2).map(r => r.txt.split(' · ')[0]).join(' · ') || '–'); } });
-    cd.innerHTML = x == null ? esc(defDate) : esc(fmtDJ(x) + (x > TODAY ? ' · à venir' : '')) + (lk ? ' · ' + (lk.acts ? lk.acts.map(a => `<a class="tl" href="${STRAVA}${a.id}" target="_blank" rel="noopener">${jourC(a.x)} ${esc(a.n)}</a>`).join(' · ') : `<a class="tl" href="${lk.href}" target="_blank" rel="noopener">${esc(lk.n)} ↗</a>`) : '');
+    cd.innerHTML = x == null ? esc(defDate) : esc(fmtDJ(x) + (x > TODAY ? ' · à venir' : '')) + (lk ? ' · ' + (lk.acts ? lk.acts.map(a => `<a class="tl" href="${STRAVA}${a.id}" target="_blank" rel="noopener">${jourC(a.x)} ${esc(a.n)}</a>`).concat(lk.plan.map(p => `<span class="tpl">${jourC(p.x)} ${esc(p.n)}</span>`)).join(' · ') : `<a class="tl" href="${lk.href}" target="_blank" rel="noopener">${esc(lk.n)} ↗</a>`) : '');
   };
   app.querySelectorAll('[data-chart]').forEach((e, i) => { const m = MID[e.dataset.chart], sp = specOf(m, R, { mode: modeOf(m), compare: false });
     charts.push({ id: m.id, ch: draw(e, sp, { h: i === on.length - 1 ? 128 : (i === 0 ? 124 : 104), xAxis: i === on.length - 1, evLabels: i === 0, ticks: 2, onHover: hover, group: 'frise' }) }); });
