@@ -121,6 +121,8 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .tl:hover, .rn a:hover, a.rn:hover { text-decoration: underline; }
 .tip .tl { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid #4A4A4A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tip .tw { margin-top: 6px; border-top: 1px solid #4A4A4A; }
+.tip .tx { position: absolute; top: 0; right: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: 10px; color: var(--fg2); font-size: 15px; pointer-events: auto; cursor: pointer; }
+.tip .tx:hover, .tip .tx:active { color: var(--fg); background: rgba(255, 255, 255, .08); } .tip .tx + b { display: block; padding-right: 24px; }
 .tip .tds { margin: 2px 0 2px; font-size: 11.5px; line-height: 1.35; color: var(--fg2); }
 .tip .ta { display: flex; gap: 8px; margin: 0; padding: 6px 0 0; border: 0; } .tip .ta span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; } .tip .ta em { font-style: normal; color: var(--fg2); font-weight: 600; }
 .cdate .tl { display: inline-block; max-width: min(46vw, 260px); overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
@@ -510,7 +512,7 @@ const M = [
     spec(R, s = {}) { return (s.view === 'hill' ? this.b : this.a).spec(R, s); }, head(R, s = {}) { return (s.view === 'hill' ? this.b : this.a).head(R, s); }
   }
 ];
-const ICO = { run: '🏃', velo: '🚴', heures: '⏱️', charge: '🔥', vo2: '🫁', vfc: '💓', fcr: '❤️', sommeil: '😴', prepa: '🔋', renfo: '🏋️', cadence: '👟', rend: '⚡', scores: '🏅' };
+const ICO = { run: '🏃', velo: '🚴', heures: '⏱️', charge: '🔥', vo2: '🫁', vfc: '💓', fcr: '❤️', sommeil: '😴', prepa: '🔋', renfo: '🏋️', cadence: '👣', rend: '⚡', scores: '🏅' };
 M.forEach(m => { m.ico = ICO[m.id] || ''; m.col = COL[m.id] || O; });
 const MID = Object.fromEntries(M.map(m => [m.id, m]));
 
@@ -610,7 +612,8 @@ function draw(host, spec, o = {}) {
     cur.innerHTML = `<line class="cross" x1="${f(px)}" x2="${f(px)}" y1="${mt}" y2="${mt + ph}"/>` + rows.filter(r => r.y != null && !r.small).map(r => `<circle cx="${f(px)}" cy="${f(r.y)}" r="5" fill="${r.color}" stroke="var(--bg)" stroke-width="2"/>`).join('');
     if (silent) { tip.hidden = true; return; }
     const ev = (spec.events || []).filter(e => spec.weekly ? monday(e.x) + 3 === x : e.x === x), lk = link(x);
-    tip.innerHTML = `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && lk.acts ? `<div class="tw">${lk.acts.filter(a => !ev.some(e => e.id === a.id)).map(a => actH(a, spec.detail)).join('')}</div>` + (ptype === 'mouse' ? '<div class="te">Clic : la semaine sur Strava</div>' : '') : lk && !ev.some(e => e.id === lk.id) ? linkH(lk) : '');
+    tip.innerHTML = (ptype === 'mouse' ? '' : '<button class="tx" aria-label="Fermer">✕</button>') + `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && lk.acts ? `<div class="tw">${lk.acts.filter(a => !ev.some(e => e.id === a.id)).map(a => actH(a, spec.detail)).join('')}</div>` + (ptype === 'mouse' ? '<div class="te">Clic : la semaine sur Strava</div>' : '') : lk && !ev.some(e => e.id === lk.id) ? linkH(lk) : '');
+    const tx = tip.querySelector('.tx'); if (tx) tx.addEventListener('click', hide);
     tip.hidden = false; const tw = tip.offsetWidth; let lf = px + 12; if (lf + tw > W) lf = px - 12 - tw; if (lf < 0) lf = Math.max(0, Math.min(W - tw, px - tw / 2)); tip.style.left = lf + 'px'; tip.style.top = (lf < px && lf + tw > px ? mt + ph * .45 : Math.max(0, mt - 4)) + 'px';
   }
   let lastX = null;
@@ -986,10 +989,10 @@ function shoeH(s) {
 }
 const shOffH = s => `<div class="trow"><span class="rd">${toDate(s.x1).getUTCFullYear()}</span><div><p class="rn">${esc(s.n)}</p><p class="rk">${avant21(s) ? 'avant 2021' : moisA(s.x0)} – ${moisA(s.x1)} · ${s.nb} sortie${s.nb > 1 ? 's' : ''}</p></div><div class="rr"><b>${nf(s.km)} km</b></div></div>`;
 function renderShoes(app) {
-  if (!SH.length) { app.innerHTML = enteteH() + '<p class="muted">Aucune chaussure trouvée sur Strava.</p>'; return; }
+  if (!SH.length) { app.innerHTML = enteteH() + chipsH() + '<p class="muted">Aucune chaussure trouvée sur Strava.</p>'; return; }
   const on = SH.filter(s => !s.ret), off = SH.filter(s => s.ret), paires = n => n + ' paire' + (n > 1 ? 's' : '');
   const tiles = [['👟', 'En service', paires(on.length)], ['📏', 'Km en service', nf(sum(on.map(s => s.km))) + ' km'], ['📦', 'À la retraite', paires(off.length)], ['🏁', 'Km au total',nf(sum(SH.map(s => s.km))) + ' km']];
-  app.innerHTML = enteteH() + `
+  app.innerHTML = enteteH() + chipsH() + `
   <div class="tk">${tiles.map(([e, l, v]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b></div>`).join('')}</div>
   ${on.length ? `<section class="card"><h2>👟 En service</h2>${on.map(shoeH).join('')}</section>` : ''}
   ${off.length ? `<section class="card"><h2>📦 À la retraite</h2><div class="races">${off.map(shOffH).join('')}</div></section>` : ''}
@@ -998,9 +1001,9 @@ function renderShoes(app) {
 }
 
 /* ---------- état ---------- */
-const VUES = [['indicateur', 'Indicateur', '🎯'], ['frise', 'Frise', '🎞️'], ['records', 'Records', '🏆'], ['trails', 'Trails', '⛰️'], ['agenda', 'À venir', '🎽'], ['chaussures', 'Chaussures', '👟']];
+const VUES = [['indicateur', 'Indicateur', '🎯'], ['frise', 'Frise', '🎞️'], ['records', 'Records', '🏆'], ['trails', 'Trails', '⛰️'], ['agenda', 'À venir', '🎽']];
 const S = { ver: 'indicateur', range: '3m', races: true, compare: false, sim: false, m: 'run', rec: '21', tv: 'km', view: {}, mode: {}, rows: new Set(['run', 'heures', 'charge', 'vo2', 'vfc', 'sommeil', 'renfo']) };
-try { const p = JSON.parse(localStorage.getItem('tableau-forme') || '{}'); if (p.range) S.range = p.range; if (p.ver) S.ver = p.ver; if (p.m && MID[p.m]) S.m = p.m; if (p.sim) S.sim = true; if (p.rec) S.rec = p.rec; if (Array.isArray(p.rows)) S.rows = new Set(p.rows.filter(id => MID[id])); } catch (e) {}
+try { const p = JSON.parse(localStorage.getItem('tableau-forme') || '{}'); if (p.range) S.range = p.range; if (p.ver) S.ver = p.ver; if (p.m && (MID[p.m] || p.m === 'chaussures')) S.m = p.m; if (p.sim) S.sim = true; if (p.rec) S.rec = p.rec; if (Array.isArray(p.rows)) S.rows = new Set(p.rows.filter(id => MID[id])); } catch (e) {}
 const hv = (location.hash || '').replace('#', ''); if (VUES.some(v => v[0] === hv)) S.ver = hv;
 if (!VUES.some(v => v[0] === S.ver)) S.ver = 'indicateur';
 const save = () => { try { localStorage.setItem('tableau-forme', JSON.stringify({ range: S.range, ver: S.ver, m: S.m, sim: S.sim, rec: S.rec, rows: [...S.rows] })); } catch (e) {} };
@@ -1030,10 +1033,12 @@ const enteteH = () => `
   <nav class="dock" aria-label="Vue">${VUES.map(([id, l, e]) => `<button data-ver="${id}" class="${S.ver === id ? 'on' : ''}" aria-pressed="${S.ver === id}">${ico(e)}${l}</button>`).join('')}</nav>`;
 
 /* ---------- vue Indicateur : un indicateur à la fois ---------- */
+const chipsH = () => `<nav class="chips scroll wrapd" aria-label="Indicateur">${M.map(x => `<button class="chip${x.id === S.m ? ' on' : ''}" data-m="${x.id}">${ico(x.ico)}${x.short}</button>`).join('')}<button class="chip${S.m === 'chaussures' ? ' on' : ''}" data-m="chaussures">${ico('👟')}Chaussures</button></nav>`;
 function renderIndicateur(app) {
+  if (S.m === 'chaussures') return renderShoes(app);
   const m = MID[S.m], R = span(S.range, S.sim && m.sim), sp = specOf(m, R, { mode: modeOf(m) }), h = m.head(R, stOf(m.id));
   app.innerHTML = enteteH() + `
-  <nav class="chips scroll wrapd" aria-label="Indicateur">${M.map(x => `<button class="chip${x.id === S.m ? ' on' : ''}" data-m="${x.id}">${ico(x.ico)}${x.short}</button>`).join('')}</nav>
+  ${chipsH()}
   ${briefH(m)}
   ${viewsH(m)}
   ${legend(sp)}<div id="a-chart"></div>
@@ -1074,7 +1079,7 @@ const app = document.getElementById('app');
 function render() {
   const sl = (app.querySelector('.chips.scroll') || {}).scrollLeft || 0;
   app.className = 'v-' + S.ver; app.style.removeProperty('--mc'); HIDERS.clear();
-  ({ frise: renderFrise, records: renderRecords, trails: renderTrails, agenda: renderAgenda, chaussures: renderShoes }[S.ver] || renderIndicateur)(app);
+  ({ frise: renderFrise, records: renderRecords, trails: renderTrails, agenda: renderAgenda }[S.ver] || renderIndicateur)(app);
   const n = app.querySelector('.chips.scroll'); if (n) n.scrollLeft = sl;
 }
 document.addEventListener('click', e => {
