@@ -163,7 +163,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 .rv { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--acc); }
 .rc { min-width: 0; }
 /* vue Records */
-.rtiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .rtile:first-child { grid-column: 1 / -1; }
+.rtiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .rtile { display: flex; flex-direction: column; gap: 1px; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 11px 14px; color: var(--fg2); min-width: 0; transition: background .15s, border-color .15s; }
 .rtile:hover { border-color: #5a5a5f; }
 .rtile .rl { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
@@ -208,6 +208,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 .trow:first-child { border-top: 0; } .tedi { grid-template-columns: 40px minmax(0, 1fr) auto; padding: 7px 0; border-top: 0; }
 .trow > div, .tedi > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .trow .rr b, .tedi .rr b { font-size: 15px; font-weight: 800; color: var(--fg); }
+@media (max-width: 759px) { .rtile { padding: 10px; } .rtile .rl { font-size: 11px; letter-spacing: .04em; } .rtile b { font-size: 19px; } }   /* 3 records sur une ligne */
 @media (max-width: 759px) { .seg.full { display: flex; align-self: stretch; } .seg.full button { flex: 1; justify-content: center; } }   /* Distance | Temps | Dénivelé : toute la largeur sur mobile */
 .seg.tvs { display: flex; align-self: stretch; } .seg.tvs button { flex: 1; justify-content: center; padding: 5px 4px; }
 a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var(--fg); }
@@ -224,6 +225,11 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .shh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; } .shh b { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sbad { font-size: 10.5px; font-weight: 700; color: var(--acc2); border: 1px solid color-mix(in srgb, var(--acc) 50%, transparent); border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 2px; white-space: nowrap; }
 .sbar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 3px 0 1px; } .sbar i { display: block; height: 100%; border-radius: 3px; background: #3DDC97; }
+/* barres des paires en service : nom + km sur une ligne, barre dessous (mobile) ; nom | barre | km (PC) */
+.sbars { display: flex; flex-direction: column; gap: 10px; }
+.sbr { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n v" "b b"; align-items: center; column-gap: 10px; row-gap: 4px; }
+.sbn { grid-area: n; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sbr b { grid-area: v; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sbt { grid-area: b; height: 10px; } .sbt i { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--mc); }
 .shoe.near .sbar i { background: #FFC24D; } .shoe.over .sbar i { background: #FF6B6B; } .shoe.over .slim { color: #FF6B6B; } .shoe .rk b { color: var(--fg); }
 /* vue À venir */
 .anext { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); } .anext h2 { font-size: 20px; } .anext h2 a { color: var(--fg); text-decoration: none; }
@@ -243,12 +249,12 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .agap { font-size: 12px; color: var(--fg2); text-align: center; padding: 2px 0; }
 @media (min-width: 760px) {
   .tk { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .rtiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rtile:first-child { grid-column: auto; }
   .row { grid-template-columns: 190px minmax(0, 1fr); gap: 16px; align-items: center; }
   .rh { flex-direction: column; align-items: flex-start; gap: 4px; }
   .rv { font-size: 22px; }
   .chips.scroll.wrapd { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
   h1 { font-size: 32px; } .ctot b { font-size: 26px; }
+  .sbr { grid-template-columns: 210px minmax(0, 1fr) 64px; grid-template-areas: "n b v"; } .sbr b { text-align: right; }   /* barres des chaussures : nom | barre | km */
 }
 @media (min-width: 1120px) {   /* boutons de l'Indicateur : 2 lignes pleine largeur, colonnes égales */
   .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
@@ -548,9 +554,14 @@ function draw(host, spec, o = {}) {
   if (!isFinite(lo)) { lo = 0; hi = 1; }
   if (spec.zero) lo = Math.min(lo, 0);
   if (hi === lo) hi = lo + 1;
+  const dLo = lo, dHi = hi;
   let ticks = [];
   if (spark) { const p = (hi - lo) * .1; if (!spec.zero) lo -= p; hi += p; }
-  else { if (!spec.zero) { const p = (hi - lo) * .06; lo -= p; hi += p; } ticks = niceTicks(lo, hi, o.ticks || 3, spec.ms); lo = ticks[0]; hi = ticks[ticks.length - 1]; }
+  else { if (!spec.zero) { const p = (hi - lo) * .06; lo -= p; hi += p; } ticks = niceTicks(lo, hi, o.ticks || 3, spec.ms); lo = ticks[0]; hi = ticks[ticks.length - 1];
+    // o.room : bande gardée libre en haut (total affiché dans la courbe) ; les données restent dessous, la grille continue au même pas
+    if (o.room && ticks.length > 1 && ph > 2 * o.room) { const r = o.room / ph, st = ticks[1] - ticks[0];
+      if (spec.invert) { lo = Math.min(lo, (dLo - r * hi) / (1 - r)); while (ticks[0] - st >= lo - 1e-9) ticks.unshift(+(ticks[0] - st).toFixed(6)); }
+      else { hi = Math.max(hi, lo + (dHi - lo) / (1 - r)); while (ticks[ticks.length - 1] + st <= hi + 1e-9) ticks.push(+(ticks[ticks.length - 1] + st).toFixed(6)); } } }
   const Y = v => spec.invert ? mt + (v - lo) / (hi - lo) * ph : mt + (1 - (v - lo) / (hi - lo)) * ph;
   const f = n => n.toFixed(1);
   let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lines[0] ? lines[0].color : O}" stop-opacity=".5"/><stop offset="1" stop-color="${lines[0] ? lines[0].color : O}" stop-opacity=".03"/></linearGradient></defs>`;
@@ -995,12 +1006,15 @@ function shoeH(s) {
     ${s.ds ? `<p class="rk tsub">${esc(s.ds)}</p>` : ''}</div>`;
 }
 const shOffH = s => `<div class="trow"><span class="rd">${toDate(s.x1).getUTCFullYear()}</span><div><p class="rn">${esc(s.n)}</p><p class="rk">${avant21(s) ? 'avant 2021' : moisA(s.x0)} – ${moisA(s.x1)} · ${s.nb} sortie${s.nb > 1 ? 's' : ''}</p></div><div class="rr"><b>${nf(s.km)} km</b></div></div>`;
+const shBarsH = on => { const L = [...on].sort((a, b) => b.km - a.km), mx = Math.max(...L.map(s => s.km)) || 1;
+  return `<div class="sbars">${L.map(s => `<div class="sbr" title="${esc(s.n)} : ${nf(s.km)} km"><span class="sbn">${esc(s.n)}</span><span class="sbt"><i style="width:${(s.km / mx * 100).toFixed(1)}%"></i></span><b>${nf(s.km)} km</b></div>`).join('')}</div>`; };
 function renderShoes(app) {
   if (!SH.length) { app.innerHTML = enteteH() + chipsH() + '<p class="muted">Aucune chaussure trouvée sur Strava.</p>'; return; }
   const on = SH.filter(s => !s.ret), off = SH.filter(s => s.ret), paires = n => n + ' paire' + (n > 1 ? 's' : '');
   const tiles = [['👟', 'En service', paires(on.length)], ['📏', 'Km en service', nf(sum(on.map(s => s.km))) + ' km'], ['📦', 'À la retraite', paires(off.length)], ['🏁', 'Km au total',nf(sum(SH.map(s => s.km))) + ' km']];
   app.innerHTML = enteteH() + chipsH() + `
   <div class="tk">${tiles.map(([e, l, v]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b></div>`).join('')}</div>
+  ${on.length ? `<section class="card"><h2>📊 Km par paire en service</h2>${shBarsH(on)}</section>` : ''}
   ${on.length ? `<section class="card"><h2>👟 En service</h2>${on.map(shoeH).join('')}</section>` : ''}
   ${off.length ? `<section class="card"><h2>📦 À la retraite</h2><div class="races">${off.map(shOffH).join('')}</div></section>` : ''}
   <p class="muted simn">Km, seuil d’alerte, paire par défaut et retraite : réglages de chaque paire sur Strava. « Depuis » = première sortie enregistrée avec la paire ; l’historique Strava est lu depuis 2021.</p>`;
@@ -1055,7 +1069,8 @@ function renderIndicateur(app) {
   <section class="card"><h2>Le reste en bref</h2><div class="brief">${M.filter(x => x.id !== S.m).map(x => { const k = x.head(R, stOf(x.id)); return `<button class="brow" data-m="${x.id}"><span class="bt">${ico(x.ico)}${x.short}</span><span class="bs" data-spark="${x.id}"></span><span class="bv"><b>${k.val}<small>${k.unit || ''}</small></b>${k.d && k.d.brief !== false ? deltaH(k.d) : ''}</span></button>`; }).join('')}</div></section>
   <section class="card"><h2>Courses</h2>${racesH(R)}</section>`;
   app.style.setProperty('--mc', m.col);
-  draw(app.querySelector('#a-chart'), sp, { h: PCH(240, 330) }); sparks(app, span(S.range));
+  const room = app.querySelector('.ctot').offsetHeight + 10;   // marge pour le rayon des points ; la courbe grandit d'autant : le total ne masque plus les données
+  draw(app.querySelector('#a-chart'), sp, { h: PCH(240, 330) + room, room }); sparks(app, span(S.range));
   app.querySelectorAll('.bl').forEach(p => { const t = e => { if (!e.target.closest('a')) p.classList.toggle('open'); }; p.addEventListener('click', t); p.addEventListener('keydown', e => { if (e.key === 'Enter') t(e); }); });
 }
 
