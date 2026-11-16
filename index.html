@@ -212,6 +212,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 .trow:first-child { border-top: 0; } .tedi { grid-template-columns: 40px minmax(0, 1fr) auto; padding: 7px 0; border-top: 0; }
 .trow > div, .tedi > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .trow .rr b, .tedi .rr b { font-size: 15px; font-weight: 800; color: var(--fg); }
+@media (max-width: 759px) { .seg.full { display: flex; align-self: stretch; } .seg.full button { flex: 1; justify-content: center; } }   /* Distance | Temps | Dénivelé : toute la largeur sur mobile */
 .seg.tvs { display: flex; align-self: stretch; } .seg.tvs button { flex: 1; justify-content: center; padding: 5px 4px; }
 a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var(--fg); }
 .tsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .card > p.note { font-size: 13px; color: var(--fg2); margin-top: -4px; }
@@ -1050,8 +1051,8 @@ function renderIndicateur(app) {
   app.innerHTML = enteteH() + `
   ${chipsH()}
   ${briefH(m)}
-  ${viewsH(m)}
-  ${legend(sp)}<div id="a-chart"></div>
+  ${viewsH(m, 'full')}
+  <div id="a-chart"></div>${legend(sp)}
   <section class="hero hrow"><div><p class="lbl">${esc(h.lbl)}</p><p class="big">${h.val}<small>${h.unit || ''}</small></p><p class="muted hdt">${fmtD(R.x0, true)} – ${fmtD(R.x1, true)}</p></div>
     ${h.d ? `<div class="hd">${deltaH(h.d)}<p class="muted">${esc(h.d.lbl)}</p></div>` : ''}</section>
   ${rangesH()}
