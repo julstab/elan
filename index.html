@@ -257,7 +257,9 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
   .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
   .chips.ind .chip { justify-content: center; min-width: 0; padding-inline: 6px; }
 }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+.fade { animation: fadein .28s ease-out backwards; }   /* rien ne reste appliqué après le fondu (l'infobulle de la courbe reste au-dessus) */
+@keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 
 </style>
 </head>
@@ -1084,11 +1086,13 @@ function renderFrise(app) {
 
 /* ---------- rendu et interactions ---------- */
 const app = document.getElementById('app');
-function render() {
+function render(fade) {
   const sl = (app.querySelector('.chips.scroll') || {}).scrollLeft || 0;
   app.className = 'v-' + S.ver; app.style.removeProperty('--mc'); HIDERS.clear();
   ({ frise: renderFrise, records: renderRecords, trails: renderTrails, agenda: renderAgenda }[S.ver] || renderIndicateur)(app);
   const n = app.querySelector('.chips.scroll'); if (n) n.scrollLeft = sl;
+  // après un clic de menu : le contenu apparaît en fondu, les menus restent immobiles
+  if (fade) app.querySelectorAll(':scope > :not(.top):not(.dock):not(.chips):not(.seg):not(.ranges):not(.opts):not(.stick)').forEach(e => e.classList.add('fade'));
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
@@ -1102,7 +1106,7 @@ document.addEventListener('click', e => {
   else if (d.tog) S[d.tog] = !S[d.tog];
   else if (d.row) { S.rows.has(d.row) ? S.rows.delete(d.row) : S.rows.add(d.row); }
   else return;
-  save(); render();
+  save(); render(true);
 });
 let rw = window.innerWidth, rt;
 window.addEventListener('resize', () => { if (window.innerWidth === rw) return; rw = window.innerWidth; clearTimeout(rt); rt = setTimeout(render, 150); });
