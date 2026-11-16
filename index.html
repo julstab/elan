@@ -85,10 +85,10 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .hero .hd { text-align: right; margin-left: auto; max-width: 44%; } .hero .delta { font-size: 16px; }
 .hero .lbl { font-size: 12px; } .hero p.muted { font-size: 12px; } .big small { font-size: 16px; }
 /* vue Indicateur : total + écart en une ligne compacte, juste au-dessus de la courbe */
-.hero.hrow { align-items: flex-end; margin-top: 2px; } .hrow .lbl { font-size: 11px; } .hrow .big { font-size: 24px; } .hrow .big small { font-size: 14px; }
+.hero.hrow { align-items: flex-end; margin-top: 0; } .hrow .lbl { font-size: 11px; } .hrow .big { font-size: 24px; } .hrow .big small { font-size: 14px; }
 .hrow .hdt, .hrow .hd .muted { font-size: 11px; } .hrow .delta { font-size: 15px; }
 .brief2 { display: flex; flex-direction: column; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 13px; line-height: 1.4; color: var(--fg2); }
-.bl { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; cursor: pointer; }
+.bl { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; cursor: pointer; }
 .bl.open { display: block; -webkit-line-clamp: unset; } .bl b { color: var(--fg); font-weight: 700; } .bl b a { color: var(--fg); text-decoration: none; } .bl .bd { color: var(--fg2); font-weight: 500; }
 .bl .bx { color: var(--fg3, var(--fg2)); }
 .bl + .bl { border-top: 1px solid var(--line); padding-top: 6px; }
@@ -848,7 +848,7 @@ function renderTrails(app) {
   drawTrails(app.querySelector('#t-chart'), tv);
 }
 
-/* ---------- vue Indicateur : dernière séance (selon l'indicateur choisi) et semaine en cours, deux lignes chacune ----------
+/* ---------- vue Indicateur : dernière séance (selon l'indicateur choisi) et semaine en cours, trois lignes chacune ----------
    Le commentaire vient des analyses de séance (notes.json, rempli à chaque analyse) ; à défaut il est calculé sur les données. */
 const NOTES = Object.assign({ acts: {}, weeks: {} }, D.notes || {});
 const TEFR = { RECOVERY: 'récupération', AEROBIC_BASE: 'endurance de base', TEMPO: 'tempo', LACTATE_THRESHOLD: 'seuil', VO2MAX: 'VO2max', ANAEROBIC_CAPACITY: 'anaérobie' };
@@ -883,7 +883,7 @@ function actAuto(a) {
   if (a.ld) b.push('charge ' + a.ld);
   return b.join(', ');
 }
-// replié sur deux lignes : titre, chiffres clés, commentaire ; le reste (extra) se lit en touchant la ligne
+// replié sur trois lignes : titre, chiffres clés, commentaire ; le reste (extra) se lit en touchant la ligne
 const bline = (ico_, title, facts, cmt, extra) => `<p class="bl" role="button" tabindex="0" title="Toucher pour tout lire">${ico(ico_)}<b>${title}</b>${facts ? ' · ' + facts : ''}${cmt ? ' — ' + cmt : ''}${extra ? ` <span class="bx">(${extra})</span>` : ''}</p>`;
 
 function seanceH(m) {
@@ -1036,16 +1036,16 @@ function renderIndicateur(app) {
   <nav class="chips scroll wrapd" aria-label="Indicateur">${M.map(x => `<button class="chip${x.id === S.m ? ' on' : ''}" data-m="${x.id}">${ico(x.ico)}${x.short}</button>`).join('')}</nav>
   ${briefH(m)}
   ${viewsH(m)}
+  ${legend(sp)}<div id="a-chart"></div>
   <section class="hero hrow"><div><p class="lbl">${esc(h.lbl)}</p><p class="big">${h.val}<small>${h.unit || ''}</small></p><p class="muted hdt">${fmtD(R.x0, true)} – ${fmtD(R.x1, true)}</p></div>
     ${h.d ? `<div class="hd">${deltaH(h.d)}<p class="muted">${esc(h.d.lbl)}</p></div>` : ''}</section>
-  <div id="a-chart"></div>${legend(sp)}
   ${rangesH()}
   <div class="opts">${R.hasPrev ? togH('compare', '🔁', 'Période précédente') : ''}${togH('races', '🏁', 'Courses')}${togH('sim', '📅', 'Mois suivant', !m.sim)}${modeH(m)}</div>
   <section class="card"><h2>Tes progrès en un coup d'œil</h2><p>${esc(h.note || '')}</p></section>
   <section class="card"><h2>Le reste en bref</h2><div class="brief">${M.filter(x => x.id !== S.m).map(x => { const k = x.head(R, stOf(x.id)); return `<button class="brow" data-m="${x.id}"><span class="bt">${ico(x.ico)}${x.short}</span><span class="bs" data-spark="${x.id}"></span><span class="bv"><b>${k.val}<small>${k.unit || ''}</small></b>${k.d && k.d.brief !== false ? deltaH(k.d) : ''}</span></button>`; }).join('')}</div></section>
   <section class="card"><h2>Courses</h2>${racesH(R)}</section>`;
   app.style.setProperty('--mc', m.col);
-  draw(app.querySelector('#a-chart'), sp, { h: PCH(280, 380) }); sparks(app, span(S.range));
+  draw(app.querySelector('#a-chart'), sp, { h: PCH(240, 330) }); sparks(app, span(S.range));
   app.querySelectorAll('.bl').forEach(p => { const t = e => { if (!e.target.closest('a')) p.classList.toggle('open'); }; p.addEventListener('click', t); p.addEventListener('keydown', e => { if (e.key === 'Enter') t(e); }); });
 }
 
