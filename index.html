@@ -1002,8 +1002,9 @@ function drawAgenda(box) {   // frise des mois à venir : un point par course (t
     for (let k = 0; ; k++) { const id = (k % 2 ? -1 : 1) * (Math.floor(k / 2) + 1), used = lanes[id] || [];
       if (!used.some(([u, v]) => a < v + 8 && a + w > u - 8)) { (lanes[id] = used).push([a, a + w]); return { r, t, a, w, xc, id }; } } });
   const up = Math.max(0, ...L.map(l => l.id)), dw = Math.max(0, ...L.map(l => -l.id)), lh = 16;
-  const y = 14 + up * lh + 10, ym = y + 18, H = ym + 6 + dw * lh + (dw ? 8 : 0);
-  const ly = id => id > 0 ? y - 12 - (id - 1) * lh : ym + 12 + (-id - 1) * lh;   // ligne de base du texte de chaque étage
+  const gap = 14;   // écart supplémentaire entre la ligne et le 1er étage de noms (lisibilité)
+  const y = 14 + up * lh + 10 + (up ? gap : 0), ym = y + 18, H = ym + 6 + dw * lh + (dw ? 8 + gap : 0);
+  const ly = id => id > 0 ? y - 12 - gap - (id - 1) * lh : ym + 12 + gap + (-id - 1) * lh;   // ligne de base du texte de chaque étage
   let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Frise des courses à venir"><line x1="${ml}" x2="${W - mr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="2"/>`;
   for (let d = toDate(x0), m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)); dn(m.toISOString().slice(0, 10)) <= x1; m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1))) {
     const m0 = dn(m.toISOString().slice(0, 10)), xx = X(m0), xm = X(Math.min(m0 + 15, x1 - 3));   // nom du mois au milieu du mois
