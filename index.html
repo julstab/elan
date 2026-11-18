@@ -362,7 +362,6 @@ function roll7(key, a, b) {
   }
   return out;
 }
-function rollN(pts, n) { return pts.map((p, i) => { const w = pts.slice(Math.max(0, i - n + 1), i + 1); return { x: p.x, v: sum(w.map(q => q.v)) / w.length }; }).filter((p, i) => i >= 2); }
 
 /* ---------- séances prévues sur Nolio : ce qui manque est estimé d'après les 12 dernières semaines ---------- */
 const FOOT = r => r.te === 'RECOVERY' || r.te === 'AEROBIC_BASE';
@@ -390,7 +389,7 @@ const simL = (R, k, name, color) => R.ws && SIMC.length ? [{ name, color, w: 2, 
 /* ---------- couleurs des séries (ordre fixe) ---------- */
 const O = '#FC5200', AMB = '#FFC24D', BLU = '#3FA7F5', CYA = '#8FE0F2', VIO = '#B58CFF', GRN = '#4CC38A', GRY = '#8E8E8E';
 /* une couleur par indicateur : la courbe principale, la puce sélectionnée et le chiffre de la frise la reprennent */
-const COL = { run: O, velo: BLU, heures: AMB, charge: '#FF4D8D', vo2: '#2DD4BF', vfc: '#C084FC', sommeil: '#7C8CFF', renfo: '#E879F9', cadence: '#22D3EE' };
+const COL = { run: O, velo: BLU, heures: AMB, charge: '#FF4D8D', vo2: '#2DD4BF', vfc: '#C084FC', sommeil: '#7C8CFF', renfo: '#E879F9' };
 const colOf = id => COL[id] || COL[{ sl: 'sommeil', slh: 'sommeil', wk: 'charge' }[id]] || O;
 const STRAVA = 'https://www.strava.com/activities/';
 // semaine sur le profil Strava : interval = année ISO + n° de semaine ISO (lue sur le jeudi)
@@ -407,7 +406,6 @@ const RACES = D.acts.filter(a => a.race).map(a => ({
 }));
 
 /* ---------- définition des indicateurs ---------- */
-const isRun = a => a.t === 'run' || a.t === 'trail';
 const VKM = { id: 'km', l: 'Distance', ico: '📏', val: a => a.km, fmt: v => nf(v, 1) + ' km', ax: v => nf(v) + ' km', big: v => [nf(v, 1), 'km'] };
 const VH = { id: 'h', l: 'Temps', ico: '⏱️', val: a => a.mn / 60, fmt: fmtH, ax: v => nf(v, v % 1 ? 1 : 0) + ' h', big: v => [fmtH(v), ''] };
 const VDP = { id: 'dp', l: 'Dénivelé', ico: '⛰️', val: a => a.dp, fmt: v => nf(v) + ' m', ax: v => nf(v) + ' m', big: v => [nf(v), 'm D+'] };
@@ -476,28 +474,6 @@ function dailyM(id, title, key, c) {
     }
   };
 }
-function runsM(id, title, c) {
-  const V = s => c.views.find(x => x.id === (s && s.view)) || c.views[0];
-  const pts = (R, v, a, b) => D.acts.filter(r => r.x >= a && r.x <= b && c.pred(r) && (!v.pred || v.pred(r))).map(r => ({ x: r.x, v: (v.val || c.val)(r), n: r.n })).filter(p => p.v);
-  return {
-    id, title, short: c.short || title, views: c.views, lower: c.lower,
-    spec(R, s = {}) {
-      const v = V(s), p = pts(R, v, R.x0, R.x1), fmt = v.fmt || c.fmt;
-      return { dom: [R.x0, R.xe], fmt, ax: v.ax || c.ax || (y => nf(y)), invert: v.invert, lp: c.pred, lines: [
-        { name: 'Moyenne glissante (7 sorties)', color: colOf(id), w: 2.5, pts: rollN(p, 7), hold: true },
-        { name: 'Sortie', color: '#B0B0B0', dotsOnly: true, pts: p }] };
-    },
-    head(R, s = {}) {
-      const v = V(s), p = pts(R, v, R.x0, R.x1), fmt = v.fmt || c.fmt;
-      if (p.length < 3) return { lbl: title, val: '–', unit: '' };
-      const r = rollN(p, 7), a = r[0].v, b = r[r.length - 1].v, df = b - a;
-      const t = fmt(b).split(' ');
-      return { lbl: title + ' – ' + v.l.toLowerCase(), val: t[0], unit: t.slice(1).join(' '), sub: 'moyenne 7 sorties',
-        d: { txt: fmt(Math.abs(df)), dir: Math.abs(df) < .5 && !v.invert ? 0 : Math.sign(df), lbl: 'depuis le ' + fmtD(r[0].x) },
-        note: `${p.length} sorties sur la période. Moyenne glissante actuelle : ${fmt(b)}, contre ${fmt(a)} au début. ` + (v.note || c.note || '') };
-    }
-  };
-}
 
 const M = [
   weeklyM('run', 'Course à pied', [{ name: 'Route', color: O, pred: a => a.t === 'run' }, { name: 'Trail', color: AMB, pred: a => a.t === 'trail' }], [VKM, VH, VDP], { short: 'Course' }),
@@ -540,11 +516,8 @@ const M = [
     spec(R, s = {}) { return (s.view === 'slh' ? this.b : this.a).spec(R, s); }, head(R, s = {}) { return (s.view === 'slh' ? this.b : this.a).head(R, s); }
   },
   weeklyM('renfo', 'Renfo', [{ name: 'Renfo', color: COL.renfo, pred: a => a.t === 'renfo' }], [VN], { tot: 'Séances de renfo', detail: true }),
-  runsM('cadence', 'Cadence', { pred: r => isRun(r) && r.cad, val: r => r.cad, fmt: v => nf(v) + ' pas/min',
-    views: [{ id: 'all', l: 'Toutes' }, { id: 'ef', l: 'Footings', pred: FOOT }, { id: 'q', l: 'Séances', pred: r => !FOOT(r) }],
-    note: 'Repères : footing 169, allure 10 km 181 à 183.' }),
 ];
-const ICO = { run: '🏃', velo: '🚴', heures: '⏱️', charge: '🔥', vo2: '🫁', vfc: '💓', sommeil: '😴', renfo: '🏋️', cadence: '👣' };
+const ICO = { run: '🏃', velo: '🚴', heures: '⏱️', charge: '🔥', vo2: '🫁', vfc: '💓', sommeil: '😴', renfo: '🏋️' };
 M.forEach(m => { m.ico = ICO[m.id] || ''; m.col = COL[m.id] || O; });
 const MID = Object.fromEntries(M.map(m => [m.id, m]));
 
@@ -906,7 +879,7 @@ const LIFT = { sq: 'Squat', dl: 'Deadlift', bp: 'Développé couché' };
 const isoOf = x => toDate(x).toISOString().slice(0, 10);
 const fmtMn = mn => mn >= 60 ? fmtH(mn / 60) : Math.round(mn) + ' min';
 const SEANCE = {   // indicateur -> quelle séance afficher
-  run: a => RUNS.includes(a.t), cadence: a => RUNS.includes(a.t) && a.cad,
+  run: a => RUNS.includes(a.t),
   velo: a => BIKES.includes(a.t), renfo: a => a.t === 'renfo', heures: () => true, charge: a => a.ld != null };
 const MESURE = { vo2: ['vo2', 'VO2max', 1, ''], vfc: ['hrv', 'VFC', 0, ' ms'], sommeil: ['sl', 'Sommeil', 0, '/100'] };
 
