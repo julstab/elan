@@ -561,7 +561,7 @@ function draw(host, spec, o = {}) {
   host.innerHTML = ''; host.classList.add('chart');
   const W = Math.max(host.clientWidth, 80), H = o.h || 300;
   const evs = spark ? [] : (spec.events || []);
-  const mr = spark ? 2 : 50, ml = spark ? 2 : 6, mt = spark ? 4 : (evs.length && o.evLabels !== false ? 26 : 12), mb = spark ? 4 : (o.xAxis === false ? 6 : 24);
+  const mr = spark ? 2 : 50, ml = spark ? 2 : 6, mt = spark ? 4 : (evs.length ? 26 : 12), mb = spark ? 4 : 24;
   const [d0, d1] = spec.dom, pw = W - ml - mr, ph = H - mt - mb;
   const X = x => ml + (x - d0) / (d1 - d0) * pw;
   let lines = spec.lines || [];
@@ -578,7 +578,7 @@ function draw(host, spec, o = {}) {
   const dLo = lo, dHi = hi;
   let ticks = [];
   if (spark) { const p = (hi - lo) * .1; if (!spec.zero) lo -= p; hi += p; }
-  else { if (!spec.zero) { const p = (hi - lo) * .06; lo -= p; hi += p; } ticks = niceTicks(lo, hi, o.ticks || 3, spec.ms); lo = ticks[0]; hi = ticks[ticks.length - 1];
+  else { if (!spec.zero) { const p = (hi - lo) * .06; lo -= p; hi += p; } ticks = niceTicks(lo, hi, 3, spec.ms); lo = ticks[0]; hi = ticks[ticks.length - 1];
     // o.room : bande gardée libre en haut (total affiché dans la courbe) ; les données restent dessous, la grille continue au même pas
     if (o.room && ticks.length > 1 && ph > 2 * o.room) { const r = o.room / ph, st = ticks[1] - ticks[0];
       if (spec.invert) { lo = Math.min(lo, (dLo - r * hi) / (1 - r)); while (ticks[0] - st >= lo - 1e-9) ticks.unshift(+(ticks[0] - st).toFixed(6)); }
@@ -588,10 +588,10 @@ function draw(host, spec, o = {}) {
   let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lines[0] ? lines[0].color : O}" stop-opacity=".5"/><stop offset="1" stop-color="${lines[0] ? lines[0].color : O}" stop-opacity=".03"/></linearGradient></defs>`;
   if (!spark) {
     ticks.forEach(t => { s += `<line class="gl" x1="${ml}" x2="${W - mr}" y1="${f(Y(t))}" y2="${f(Y(t))}"/><text class="ytick" x="${W - mr + 8}" y="${f(Y(t) + 4)}">${esc((spec.ax || spec.fmt)(t))}</text>`; });
-    if (d1 > CUR + 6) { const fx = X(spec.weekly ? CUR + 7 : TODAY + .5); s += `<rect class="fut" x="${f(fx)}" y="${mt}" width="${f(W - mr - fx)}" height="${ph}"/><line class="futl" x1="${f(fx)}" x2="${f(fx)}" y1="${mt}" y2="${mt + ph}"/>` + (o.evLabels !== false ? `<text class="futt" x="${f(fx + 6)}" y="${mt + 13}">À VENIR</text>` : ''); }
+    if (d1 > CUR + 6) { const fx = X(spec.weekly ? CUR + 7 : TODAY + .5); s += `<rect class="fut" x="${f(fx)}" y="${mt}" width="${f(W - mr - fx)}" height="${ph}"/><line class="futl" x1="${f(fx)}" x2="${f(fx)}" y1="${mt}" y2="${mt + ph}"/>` + `<text class="futt" x="${f(fx + 6)}" y="${mt + 13}">À VENIR</text>`; }
     if (spec.hband) s += `<rect class="band" x="${ml}" width="${pw}" y="${f(Math.min(Y(spec.hband.lo), Y(spec.hband.hi)))}" height="${f(Math.abs(Y(spec.hband.lo) - Y(spec.hband.hi)))}"/>`;
     if (spec.band && spec.band.length > 1) { const b = spec.band; s += `<path class="band" d="M${b.map(p => f(X(p.x)) + ' ' + f(Y(p.hi))).join('L')}L${[...b].reverse().map(p => f(X(p.x)) + ' ' + f(Y(p.lo))).join('L')}Z"/>`; }
-    if (o.xAxis !== false) {
+    {   // axe des dates
       const days = d1 - d0, labs = [];
       if (days <= 40) { for (let x = d0; x <= d1; x += 7) labs.push([x, fmtD(x)]); }
       else { const d = toDate(d0); let y = d.getUTCFullYear(), m = d.getUTCMonth(), i = 0; const every = days > 200 && W < 560 ? 2 : 1;
@@ -600,7 +600,7 @@ function draw(host, spec, o = {}) {
     }
     let lastX = -99;
     evs.forEach(e => { const x = X(e.x); s += `<line class="ev${e.note ? ' note' : ''}" x1="${f(x)}" x2="${f(x)}" y1="${mt - 4}" y2="${H - mb}"/>`;
-      if (o.evLabels !== false && (x - lastX > (e.note ? 30 : 40))) { const lw = e.lbl.length * 5.6; s += `<text class="evl" x="${f(Math.min(Math.max(x, ml + lw / 2), W - mr - lw / 2 + 30))}" y="${mt - 9}">${esc(e.lbl)}</text>`; lastX = x + (e.note ? lw / 2 : 0); } });
+      if (x - lastX > (e.note ? 30 : 40)) { const lw = e.lbl.length * 5.6; s += `<text class="evl" x="${f(Math.min(Math.max(x, ml + lw / 2), W - mr - lw / 2 + 30))}" y="${mt - 9}">${esc(e.lbl)}</text>`; lastX = x + (e.note ? lw / 2 : 0); } });
   }
   if (spec.bars) {
     const bw = Math.max(2, X(spec.bars.xs[0] + 6.3) - X(spec.bars.xs[0] + .7)), gap = bw > 6 ? 2 : 0;
@@ -645,11 +645,10 @@ function draw(host, spec, o = {}) {
   };
   const linkH = (a, pre) => `<a class="tl" href="${a.href || STRAVA + a.id}" target="_blank" rel="noopener">${pre || ''}${esc(a.n)} ↗</a>`;
   function title(x) { x = norm(x); return spec.weekly ? 'Semaine du ' + fmtD(x - 3) + (x - 3 === CUR ? ' (en cours)' : x - 3 > CUR ? ' (prévue)' : '') : fmtDJ(x) + (x > TODAY ? ' (simulation)' : ''); }
-  function show(x, silent) {
+  function show(x) {
     if (x == null || !snaps.length) { cur.innerHTML = ''; tip.hidden = true; return; }
     x = norm(x); const px = X(x), rows = at(x);
     cur.innerHTML = `<line class="cross" x1="${f(px)}" x2="${f(px)}" y1="${mt}" y2="${mt + ph}"/>` + rows.filter(r => r.y != null && !r.small).map(r => `<circle cx="${f(px)}" cy="${f(r.y)}" r="5" fill="${r.color}" stroke="var(--bg)" stroke-width="2"/>`).join('');
-    if (silent) { tip.hidden = true; return; }
     const ev = (spec.events || []).filter(e => spec.weekly ? monday(e.x) + 3 === x : e.x === x), lk = link(x);
     tip.innerHTML = (ptype === 'mouse' ? '' : '<button class="tx" aria-label="Fermer">✕</button>') + `<b>${title(x)}</b>` + rows.map(r => `<div class="tr"><i ${r.dash && r.color ? `class="gh" style="--c:${r.color}"` : `style="background:${r.color || 'transparent'}"`}></i><span>${esc(r.name)}</span><em>${esc(r.txt)}</em></div>`).join('') + ev.map(e => e.id ? linkH(e, '⚑ ') : `<div class="te">⚑ ${esc(e.n || e.lbl)}</div>`).join('') + (lk && lk.acts ? `<div class="tw">${lk.acts.filter(a => !ev.some(e => e.id === a.id)).map(a => actH(a, spec.detail)).join('')}${lk.plan.map(planH).join('')}</div>` + (ptype === 'mouse' && lk.href ? '<div class="te">Clic : la semaine sur Strava</div>' : '') : lk && !ev.some(e => e.id === lk.id) ? linkH(lk) : '');
     const tx = tip.querySelector('.tx'); if (tx) tx.addEventListener('click', hide);
@@ -658,24 +657,23 @@ function draw(host, spec, o = {}) {
   let lastX = null;
   const move = e => { const r = svg.getBoundingClientRect(), xv = d0 + (e.clientX - r.left - ml) / pw * (d1 - d0); let best = null, bd = 1e9;
     for (const sx of snaps) { const dd = Math.abs(sx - xv); if (dd < bd) { bd = dd; best = sx; } }
-    if (best !== lastX) { lastX = best; const lk = link(best); ov.style.cursor = lk && lk.href ? 'pointer' : ''; o.onHover ? o.onHover(best, lk) : show(best); } };
-  const hide = () => { lastX = null; o.onHover ? o.onHover(null) : show(null); };
-  // tactile (hors Frise) : l'infobulle ne s'ouvre que sur un point ou une barre ; toucher ailleurs la ferme. La souris garde le survol.
+    if (best !== lastX) { lastX = best; const lk = link(best); ov.style.cursor = lk && lk.href ? 'pointer' : ''; show(best); } };
+  const hide = () => { lastX = null; show(null); };
+  // tactile : l'infobulle ne s'ouvre que sur un point ou une barre ; toucher ailleurs la ferme. La souris garde le survol.
   const hit = e => { const r = svg.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top; let best = null, bd = 1e9;
     for (const sx of snaps) { const dd = Math.abs(X(norm(sx)) - px); if (dd < bd) { bd = dd; best = sx; } }
     if (best == null || bd > 18) return null;
     if (at(best).some(q => q.y != null && Math.abs(q.y - py) <= 22)) return best;
     if (spec.bars) { const i = spec.bars.xs.indexOf(norm(best) - 3); if (i >= 0 && py >= Y(tots[i]) - 12 && py <= mt + ph) return best; }
     return null; };
-  ov.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' || o.onHover) move(e); });
-  ov.addEventListener('pointerdown', e => { ptype = e.pointerType; if (ptype === 'mouse' || o.onHover) return move(e);
+  ov.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') move(e); });
+  ov.addEventListener('pointerdown', e => { ptype = e.pointerType; if (ptype === 'mouse') return move(e);
     const b = hit(e); if (b == null) hide(); else { lastX = b; show(b); } });
   ov.addEventListener('click', () => { const a = ptype === 'mouse' && link(lastX); if (a && a.href) window.open(a.href, '_blank', 'noopener'); });   // souris : clic direct ; tactile : lien dans l'infobulle
   ov.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
-  host._grp = o.group || null; HIDERS.add({ host, hide, group: o.group || null });
-  return { show, at, title };
+  HIDERS.add({ host, hide });
 }
-document.addEventListener('pointerdown', e => { if (e.target.closest && e.target.closest('.tl')) return; const c = e.target.closest && e.target.closest('.chart'), g = c && c._grp; HIDERS.forEach(h => { if (!h.host.isConnected) HIDERS.delete(h); else if (h.host !== c && !(g && h.group === g)) h.hide(); }); });
+document.addEventListener('pointerdown', e => { if (e.target.closest && e.target.closest('.tl')) return; const c = e.target.closest && e.target.closest('.chart'); HIDERS.forEach(h => { if (!h.host.isConnected) HIDERS.delete(h); else if (h.host !== c) h.hide(); }); });
 function legend(spec) {
   const items = [];
   if (spec.bars) { spec.bars.stacks.forEach(k => items.push(`<span><i style="background:${k.color}"></i>${esc(k.name)}</span>`)); if (spec.bars.stacks.some(k => k.pv && k.pv.some(Boolean))) items.push(`<span><i class="gh" style="--c:var(--fg2)"></i>Prévu sur Nolio</span>`); }
@@ -716,7 +714,7 @@ const rproj = (t, d) => {
 
 function drawRec(box, d) {
   const cfg = RDIST[d], C = cfg.c, K = REC.K[d], races = RR.filter(r => r.d === d);
-  box.innerHTML = ''; box.classList.add('chart'); box._grp = null;
+  box.innerHTML = ''; box.classList.add('chart');
   const W = Math.max(box.clientWidth, 260), H = PCH(270, 360), ml = 8, mr = 50, mt = 26, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
   const vals = races.map(r => r.t);
   if (K) for (let t = RNOW; t <= RX1 + 1e-9; t += .25) { const p = rproj(t, d); vals.push(p.lo, p.hi); }
@@ -779,7 +777,7 @@ function drawRec(box, d) {
     g.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
   });
   svg.addEventListener('pointerdown', e => { if (!e.target.closest('.rdot') && !e.target.classList.contains('ov')) hide(); });
-  HIDERS.add({ host: box, hide, group: null });
+  HIDERS.add({ host: box, hide });
 }
 
 function renderRecords(app) {
@@ -863,7 +861,7 @@ function drawTrails(box, v) {
     g.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
   });
   svg.addEventListener('pointerdown', e => { if (!e.target.closest('.rdot')) hide(); });
-  HIDERS.add({ host: box, hide, group: null });
+  HIDERS.add({ host: box, hide });
 }
 
 /* une épreuve courue plusieurs fois : chaque édition, écart de chrono quand le parcours est le même */
