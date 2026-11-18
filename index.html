@@ -406,8 +406,8 @@ const simL = (R, k, name, color) => R.ws && SIMC.length ? [{ name, color, w: 2, 
 /* ---------- couleurs des séries (ordre fixe) ---------- */
 const O = '#FC5200', AMB = '#FFC24D', BLU = '#3FA7F5', CYA = '#8FE0F2', VIO = '#B58CFF', GRN = '#4CC38A', GRY = '#8E8E8E';
 /* une couleur par indicateur : la courbe principale, la puce sélectionnée et le chiffre de la frise la reprennent */
-const COL = { run: O, velo: BLU, heures: AMB, charge: '#FF4D8D', vo2: '#2DD4BF', vfc: '#C084FC', sommeil: '#7C8CFF', renfo: '#E879F9', cadence: '#22D3EE', rend: '#FACC15', scores: '#FF9F7A' };
-const colOf = id => COL[id] || COL[{ sl: 'sommeil', slh: 'sommeil', end: 'scores', hill: 'scores', wk: 'charge' }[id]] || O;
+const COL = { run: O, velo: BLU, heures: AMB, charge: '#FF4D8D', vo2: '#2DD4BF', vfc: '#C084FC', sommeil: '#7C8CFF', renfo: '#E879F9', cadence: '#22D3EE' };
+const colOf = id => COL[id] || COL[{ sl: 'sommeil', slh: 'sommeil', wk: 'charge' }[id]] || O;
 const STRAVA = 'https://www.strava.com/activities/';
 // semaine sur le profil Strava : interval = année ISO + n° de semaine ISO (lue sur le jeudi)
 const STRAVA_WEEK = x => { const th = monday(x) + 3, y = toDate(th).getUTCFullYear(), w = Math.floor((th - dn(y + '-01-01')) / 7) + 1;
@@ -559,16 +559,8 @@ const M = [
   runsM('cadence', 'Cadence', { pred: r => isRun(r) && r.cad, val: r => r.cad, fmt: v => nf(v) + ' pas/min',
     views: [{ id: 'all', l: 'Toutes' }, { id: 'ef', l: 'Footings', pred: FOOT }, { id: 'q', l: 'Séances', pred: r => !FOOT(r) }],
     note: 'Repères : footing 169, allure 10 km 181 à 183.' }),
-  runsM('rend', 'Rendement en footing', { short: 'Rendement', lower: true, pred: r => r.t === 'run' && FOOT(r) && r.km >= 4 && r.hr && !r.race,
-    views: [{ id: 'cout', l: 'Coût cardiaque', val: r => r.hr * r.mn / r.km, fmt: v => nf(v) + ' batt./km', note: 'Battements de cœur dépensés par kilomètre en footing : plus c’est bas, mieux c’est.' },
-      { id: 'all', l: 'Allure', val: r => r.mn / r.km, fmt: v => fmtPace(v) + ' /km', ax: fmtPace, invert: true, note: 'Allure moyenne des footings sur route.' }] }),
-  {
-    id: 'scores', title: 'Scores Garmin', short: 'Scores', views: [{ id: 'end', l: 'Endurance' }, { id: 'hill', l: 'Côte' }],
-    a: dailyM('end', "Score d'endurance", 'end', { dots: true }), b: dailyM('hill', 'Score de côte', 'hill', {}),
-    spec(R, s = {}) { return (s.view === 'hill' ? this.b : this.a).spec(R, s); }, head(R, s = {}) { return (s.view === 'hill' ? this.b : this.a).head(R, s); }
-  }
 ];
-const ICO = { run: '🏃', velo: '🚴', heures: '⏱️', charge: '🔥', vo2: '🫁', vfc: '💓', sommeil: '😴', renfo: '🏋️', cadence: '👣', rend: '⚡', scores: '🏅' };
+const ICO = { run: '🏃', velo: '🚴', heures: '⏱️', charge: '🔥', vo2: '🫁', vfc: '💓', sommeil: '😴', renfo: '🏋️', cadence: '👣' };
 M.forEach(m => { m.ico = ICO[m.id] || ''; m.col = COL[m.id] || O; });
 const MID = Object.fromEntries(M.map(m => [m.id, m]));
 
@@ -932,9 +924,9 @@ const LIFT = { sq: 'Squat', dl: 'Deadlift', bp: 'Développé couché' };
 const isoOf = x => toDate(x).toISOString().slice(0, 10);
 const fmtMn = mn => mn >= 60 ? fmtH(mn / 60) : Math.round(mn) + ' min';
 const SEANCE = {   // indicateur -> quelle séance afficher
-  run: a => RUNS.includes(a.t), cadence: a => RUNS.includes(a.t) && a.cad, rend: a => RUNS.includes(a.t),
+  run: a => RUNS.includes(a.t), cadence: a => RUNS.includes(a.t) && a.cad,
   velo: a => BIKES.includes(a.t), renfo: a => a.t === 'renfo', heures: () => true, charge: a => a.ld != null };
-const MESURE = { vo2: ['vo2', 'VO2max', 1, ''], vfc: ['hrv', 'VFC', 0, ' ms'], sommeil: ['sl', 'Sommeil', 0, '/100'], scores: ['end', "Score d'endurance", 0, ''] };
+const MESURE = { vo2: ['vo2', 'VO2max', 1, ''], vfc: ['hrv', 'VFC', 0, ' ms'], sommeil: ['sl', 'Sommeil', 0, '/100'] };
 
 function actFacts(a) {
   const run = RUNS.includes(a.t), p = [];
