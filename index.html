@@ -327,7 +327,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 @media (max-width: 759px) { .rchip.ufull { gap: 8px 14px; padding: 9px 10px; } .rchip.ufull .ug { flex: 1 1 100%; justify-content: center; } .rchip.ufull .ui img { height: 17px; } .rchip.ufull .ug img { height: 22px; } .rchip.ufull .ui b { font-size: 14px; } .rchip.ufull .ug b { font-size: 16px; } .rchip.ufull .ua { display: none; } }
 /* tuiles compactes de la page Trails (au-dessus de l'index UTMB) */
 .tk.ttr { gap: 6px; } .tk.ttr .tki { padding: 7px 11px; border-radius: 12px; } .tk.ttr .rl { font-size: 10.5px; letter-spacing: .05em; } .tk.ttr b { font-size: 18px; }
-@media (max-width: 759px) { .tk.ttr b { font-size: 16px; } }
+@media (max-width: 759px) { .tk.ttr { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; } .tk.ttr .tki { padding: 6px 6px; align-items: center; text-align: center; } .tk.ttr .rl { font-size: 9px; letter-spacing: .02em; white-space: nowrap; } .tk.ttr b { font-size: 14px; } }
 
 </style>
 </head>
