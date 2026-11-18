@@ -317,6 +317,14 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 /* Prochain dossard : badges sur une seule ligne */
 .anext .rchips { flex-wrap: nowrap; gap: 5px; } .anext .rchip { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 759px) { .anext .rchips { gap: 4px; } .anext .rchip { padding: 3px 6px; font-size: 11px; letter-spacing: -.01em; } }
+/* Index UTMB : icônes officielles des catégories */
+.rchip.ufull { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 16px; }
+.rchip.ufull .ui { display: inline-flex; align-items: center; gap: 7px; }
+.rchip.ufull .ui img { height: 20px; width: auto; display: block; }
+.rchip.ufull .ui b { color: var(--fg); font-size: 15px; font-variant-numeric: tabular-nums; }
+.rchip.ufull .ua { color: var(--fg3); }
+.rchip.ufull .ug img { height: 24px; } .rchip.ufull .ug b { font-size: 17px; }
+@media (max-width: 759px) { .rchip.ufull { gap: 8px 14px; padding: 9px 10px; } .rchip.ufull .ug { flex: 1 1 100%; justify-content: center; } .rchip.ufull .ui img { height: 17px; } .rchip.ufull .ug img { height: 22px; } .rchip.ufull .ui b { font-size: 14px; } .rchip.ufull .ug b { font-size: 16px; } .rchip.ufull .ua { display: none; } }
 
 </style>
 </head>
@@ -819,6 +827,8 @@ const tTip = r => `<b>${esc(r.nm)}</b><div class="te">${esc([tSub(r), fmtD(r.x, 
   + (r.sid ? `<a class="tl" href="${STRAVA}${r.sid}" target="_blank" rel="noopener">Voir l’activité ↗</a>` : '')
   + (r.bt ? `<a class="tl" href="${BETRAIL}${r.bt}" target="_blank" rel="noopener">Résultats sur Betrail ↗</a>` : '');
 
+// icônes officielles des catégories UTMB (images du site utmb.world)
+const UIMG = (n, trim) => `https://img.utmb.world/image/upload/q_auto/f_auto/c_fill,g_auto/${trim ? 'e_trim/' : ''}c_scale,h_60/v1/Common/categories/${n}`;
 const UCAT = { '20k': '20K', '50k': '50K', '100k': '100K', '100m': '100M' };
 const TV = [   // mesures du graphique « au fil des années »
   { id: 'km', l: 'Km', ico: '📏', val: r => r.km, ax: v => nf(v) + ' km', lb: r => nf(r.km) + ' km', zero: true },
@@ -914,7 +924,7 @@ function renderTrails(app) {
   app.innerHTML = enteteH() + `
   <p class="muted">${L.length} trails terminés depuis ${L[0].yr}, dont ${ul} ultra${ul > 1 ? 's' : ''}.</p>
   <div class="tk">${tiles.map(([e, l, v]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b></div>`).join('')}</div>
-  <div class="rchips">${UI.general ? `<a class="rchip ufull" href="${D.utmb.url}" target="_blank" rel="noopener">Index UTMB <b>${UI.general}</b>${['20k', '50k', '100k'].filter(k => UI[k]).map(k => ` · ${UCAT[k]} ${UI[k]}`).join('')} ↗</a>` : ''}</div>
+  <div class="rchips">${UI.general ? `<a class="rchip ufull" href="${D.utmb.url}" target="_blank" rel="noopener" aria-label="Index UTMB ${UI.general}"><span class="ui ug"><img src="${UIMG('index', 1)}" alt="UTMB Index"><b>${UI.general}</b></span>${['20k', '50k', '100k', '100m'].filter(k => UI[k]).map(k => `<span class="ui"><img src="${UIMG(UCAT[k] + '_bg')}" alt="${UCAT[k]}"><b>${UI[k]}</b></span>`).join('')}<span class="ua">↗</span></a>` : ''}</div>
   <section class="card"><h2>📈 Au fil des années</h2><div class="seg tvs" role="group" aria-label="Mesure">${TV.filter(t => L.some(r => t.val(r) != null)).map(t => `<button data-tv="${t.id}" class="${t === tv ? 'on' : ''}" aria-pressed="${t === tv}">${ico(t.ico)}${t.l}</button>`).join('')}</div>
     ${tv.id === 'rk' ? '<p class="muted note">Place parmi les finishers : plus le point est haut, mieux tu es classé.</p>' : tv.id === 'us' ? '<p class="muted note">Score UTMB obtenu sur chaque course (sur 1 000).</p>' : ''}<div id="t-chart"></div>
     <div class="legend">${TCLS.map(c => `<span><i class="pt" style="--c:${c.c}"></i>${c.l}</span>`).join('')}</div></section>
