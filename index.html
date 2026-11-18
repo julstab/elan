@@ -306,6 +306,10 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .aln small, .alv small, .alf small { font-size: 11.5px; color: var(--fg3); line-height: 1.3; } .alv b, .alf b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .alf small.als { font-weight: 700; }
 .tki .rk { font-size: 12px; color: var(--fg3); }
+.alld { fill: none; stroke: var(--fg3); stroke-width: 1; opacity: .7; } .alln { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.allv { fill: var(--fg); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; } .allf { fill: var(--fg3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.alp.on .alln, .alp.on .allv { fill: var(--mc); } .alp.on .alld { stroke: var(--mc); opacity: 1; }
+@media (max-width: 759px) { .tk.alt { gap: 6px; } .tk.alt .tki { padding: 7px 10px; border-radius: 12px; } .tk.alt .rl { font-size: 10px; letter-spacing: .05em; } .tk.alt b { font-size: 16px; } .tk.alt .rk { font-size: 11px; } }
 
 </style>
 </head>
@@ -1144,7 +1148,28 @@ function alChart(host) {
   return { show: i => show(svg.querySelector(`.alp[data-i="${i}"]`)) };
 }
 
+// téléphone : échelle verticale des allures (rapide en haut), zones en couleur sur la barre ; les repères sont espacés régulièrement
+// à droite et reliés par un trait à leur vraie place sur l'échelle : plus aucun chevauchement
+function alLadder(host) {
+  const W = Math.max(host.clientWidth, 280), L = AL.rep.map((r, i) => ({ r, i, v: kmh(repS(r)) })).sort((a, b) => b.v - a.v);
+  const rh = 38, mt = 12, H = mt * 2 + rh * L.length, bx = 40, bw = 10, lx = 76, vTop = 19, vBot = 9.2;
+  const Y = v => mt + rh / 2 + (vTop - v) / (vTop - vBot) * (H - 2 * mt - rh);
+  const zb = AL.zones.map((z, i) => { const vLo = i ? AL_V(z[2]) : vBot, vHi = i < AL.zones.length - 1 ? AL_V(AL.zones[i + 1][2]) : vTop;
+    return `<rect x="${bx}" y="${Y(vHi)}" width="${bw}" height="${Y(vLo) - Y(vHi)}" fill="${z[3]}" opacity=".85"/><text class="alz" x="${bx + bw / 2}" y="${(Y(vHi) + Y(vLo)) / 2 + 3.5}" text-anchor="middle" fill="#111">${z[0].slice(1)}</text>`; }).join('');
+  const tk = [180, 210, 240, 270, 300, 360].map(s => `<line class="gl" x1="${bx - 5}" x2="${bx}" y1="${Y(kmh(s))}" y2="${Y(kmh(s))}"/><text class="ax" x="${bx - 8}" y="${Y(kmh(s)) + 4}" text-anchor="end">${fmtS(s)}</text>`).join('');
+  const rows = L.map((o, k) => { const { r, i } = o, y = mt + rh * k + rh / 2, c = SRC_COL[r[3]], fc = r[2] || '≈ ' + nf(AL_F(o.v));
+    const ty = Array.isArray(r[1]) ? [Y(kmh(r[1][1])), Y(kmh(r[1][0]))] : null, py = Y(o.v);
+    return `<g class="alp" data-i="${i}">${ty ? `<line class="alrg" x1="${bx + bw + 4}" x2="${bx + bw + 4}" y1="${ty[0]}" y2="${ty[1]}" stroke="${c}"/>` : ''}
+      <path class="alld" d="M${bx + bw + 4},${py} C${lx - 14},${py} ${lx - 22},${y} ${lx - 6},${y}"/><circle class="dot" cx="${lx}" cy="${y}" r="4.5" stroke="${c}"/>
+      <rect x="${lx - 8}" y="${y - rh / 2}" width="${W - lx + 8}" height="${rh}" fill="transparent"/>
+      <text class="alln" x="${lx + 12}" y="${y + 4}">${esc(r[0].replace(/ \(.*\)/, ''))}</text><text class="allv" x="${W - 2}" y="${y - 2}" text-anchor="end">${repA(r)}</text><text class="allf" x="${W - 2}" y="${y + 12}" text-anchor="end">FC ${fc}</text></g>`; }).join('');
+  host.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="Échelle des allures avec les zones et les repères">${tk}${zb}${rows}</svg>`;
+  const svg = host.querySelector('svg');
+  return { show: i => { svg.querySelectorAll('.alp.on').forEach(e => e.classList.remove('on')); svg.querySelector(`.alp[data-i="${i}"]`).classList.add('on'); } };
+}
+
 function renderAllures(app) {
+  const tel = window.innerWidth < 760;
   const sv1 = AL.rep.find(r => r[0].includes('SV1')), lt = AL.rep.find(r => r[0].includes('SV2'));
   const tiles = [['🚀', 'VMA', nf(AL.vma, 1) + ' km/h', fmtS(3600 / AL.vma) + ' /km'], ['🔴', 'Seuil lactique', fmtS(lt[1]) + ' /km', 'FC ' + lt[2]],
     ['🟢', 'Seuil aérobie', repA(sv1) + ' /km', 'FC ' + sv1[2]], ['❤️', 'FC max · repos', AL.fcmax + ' · ' + AL.fcr, 'bpm']];
@@ -1156,16 +1181,16 @@ function renderAllures(app) {
     return `<button class="alr" data-al="${i}"><span class="alzt" style="--zc:${z[3]}">${z[0]}</span><span class="aln"><b>${esc(r[0])}</b></span>
       <span class="alv"><b>${repA(r)}</b><small>${nf(kmh(s), 1)} km/h · ${nf(kmh(s) / AL.vma * 100)} %</small></span><span class="alf"><b>${r[2] || '≈ ' + nf(AL_F(kmh(s)))}</b><small class="als" style="color:${SRC_COL[r[3]]}">${r[3]}</small></span><span class="ald">${esc(r[4])}</span></button>`; }).join('');
   app.innerHTML = enteteH() + chipsH() + `
-  <div class="tk">${tiles.map(([e, l, v, s]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b><span class="rk">${s}</span></div>`).join('')}</div>
-  <section class="card"><h2>📈 FC selon l’allure</h2><div id="al-chart" class="chart"></div>
+  <div class="tk alt">${tiles.map(([e, l, v, s]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b><span class="rk">${s}</span></div>`).join('')}</div>
+  <section class="card"><h2>${tel ? '🎚️ Échelle des allures' : '📈 FC selon l’allure'}</h2><div id="al-chart" class="chart"></div>
     <p class="allg">${Object.entries(SRC_COL).map(([k, c]) => `<span><i style="border-color:${c}"></i>${k === 'Course' ? 'Chrono de course' : k === 'Calcul' ? 'Mon calcul' : k === 'Campus' ? 'Campus Coach' : k}</span>`).join('')}</p>
-    <p class="note">Plus on va à droite, plus c’est rapide. La courbe relie tes sorties et courses de 2026 en effort continu ; touche un point pour lire le repère.</p></section>
+    <p class="note">${tel ? 'Du plus rapide (en haut) au plus lent. La barre colorée donne tes zones FC (1 à 5) ; chaque repère est relié à sa place sur l’échelle.' : 'Plus on va à droite, plus c’est rapide. La courbe relie tes sorties et courses de 2026 en effort continu ; touche un point pour lire le repère.'}</p></section>
   <section class="card"><h2>🎚️ Zones</h2><div class="alzs">${zr.map(q => `<div class="alzr" style="--zc:${q.z[3]}"><span class="alzt">${q.z[0]}</span><span class="aln"><b>${q.z[1]}</b></span><span class="alv"><b>${q.al}</b><small>/km</small></span><span class="alf"><b>${q.fc}</b><small>bpm</small></span></div>`).join('')}</div>
     <p class="note">Zones FC de ta montre (% de la FC max 160) ; les allures sont lues sur la courbe, sur le plat et par temps frais.</p></section>
   <section class="card"><h2>📍 Repères</h2><div class="alrs">${rows}</div>
     <p class="note">Allure /km, vitesse, % de VMA, FC. Repères au ${fmtD(dn(AL.maj), true)} : Campus Coach recalcule ses allures au fil des séances.</p></section>`;
   app.style.setProperty('--mc', '#FF6B6B');
-  const ch = alChart(app.querySelector('#al-chart'));
+  const ch = (tel ? alLadder : alChart)(app.querySelector('#al-chart'));
   app.querySelectorAll('[data-al]').forEach(b => b.addEventListener('click', () => { ch.show(+b.dataset.al); app.querySelector('#al-chart').scrollIntoView({ behavior: 'smooth', block: 'center' }); }));
 }
 
