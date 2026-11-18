@@ -220,6 +220,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 @media (max-width: 759px) { .seg.full { display: flex; align-self: stretch; } .seg.full button { flex: 1; justify-content: center; } }   /* Distance | Temps | Dénivelé : toute la largeur sur mobile */
 .seg.tvs { display: flex; align-self: stretch; } .seg.tvs button { flex: 1; justify-content: center; padding: 5px 4px; }
 a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var(--fg); }
+.rchip.ufull { flex: 1 1 100%; text-align: center; white-space: normal; padding: 7px 12px; font-size: 13.5px; }   /* index UTMB sur toute la largeur (Trails) */
 .tsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .card > p.note { font-size: 13px; color: var(--fg2); margin-top: -4px; }
 .tdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 6px; }
 .tyh { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
@@ -853,7 +854,7 @@ function renderTrails(app) {
   const L = TT, by = (k, f) => L.reduce((m, r) => ((m[k(r)] = m[k(r)] || []).push(r), m), {});
   if (!L.length) { app.innerHTML = enteteH() + '<p class="muted">Aucun trail à afficher.</p>'; return; }
   const G = Object.values(by(r => r.grp)).filter(g => g.length > 1).sort((a, b) => b.length - a.length || b[b.length - 1].x - a[a.length - 1].x);
-  const Y = by(r => r.yr), longest = L.reduce((a, b) => b.km > a.km ? b : a), R = L.filter(r => r.top != null), best = R.length ? R.reduce((a, b) => b.top < a.top ? b : a) : null;
+  const Y = by(r => r.yr);
   const tot = A => `${A.length} trail${A.length > 1 ? 's' : ''} · ${nf(sum(A.map(r => r.km)))} km · ${nf(sum(A.map(r => r.dp)))} m D+`;
   const UI = (D.utmb || {}).pi || {}, tv = TV.find(t => t.id === S.tv && L.some(r => t.val(r) != null)) || TV[0];
   const hors = L.some(r => !r.rk), ul = L.filter(r => r.cl.k === 'ultra').length;
@@ -861,7 +862,7 @@ function renderTrails(app) {
   app.innerHTML = enteteH() + `
   <p class="muted">${L.length} trails terminés depuis ${L[0].yr}, dont ${ul} ultra${ul > 1 ? 's' : ''}.</p>
   <div class="tk">${tiles.map(([e, l, v]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b></div>`).join('')}</div>
-  <div class="rchips">${UI.general ? `<a class="rchip" href="${D.utmb.url}" target="_blank" rel="noopener">Index UTMB <b>${UI.general}</b>${['20k', '50k', '100k'].filter(k => UI[k]).map(k => ` · ${UCAT[k]} ${UI[k]}`).join('')} ↗</a>` : ''}<span class="rchip">Le plus long <b>${nf(longest.km)} km</b> · ${esc(longest.nm)}</span>${best ? `<span class="rchip">Meilleur classement <b>top ${pct(best.top)}</b> · ${esc(best.nm)} ${best.yr}</span>` : ''}</div>
+  <div class="rchips">${UI.general ? `<a class="rchip ufull" href="${D.utmb.url}" target="_blank" rel="noopener">Index UTMB <b>${UI.general}</b>${['20k', '50k', '100k'].filter(k => UI[k]).map(k => ` · ${UCAT[k]} ${UI[k]}`).join('')} ↗</a>` : ''}</div>
   <section class="card"><h2>📈 Au fil des années</h2><div class="seg tvs" role="group" aria-label="Mesure">${TV.filter(t => L.some(r => t.val(r) != null)).map(t => `<button data-tv="${t.id}" class="${t === tv ? 'on' : ''}" aria-pressed="${t === tv}">${ico(t.ico)}${t.l}</button>`).join('')}</div>
     ${tv.id === 'rk' ? '<p class="muted note">Place parmi les finishers : plus le point est haut, mieux tu es classé.</p>' : tv.id === 'us' ? '<p class="muted note">Score UTMB obtenu sur chaque course (sur 1 000).</p>' : ''}<div id="t-chart"></div>
     <div class="legend">${TCLS.map(c => `<span><i class="pt" style="--c:${c.c}"></i>${c.l}</span>`).join('')}</div></section>
