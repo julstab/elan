@@ -325,6 +325,9 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .rchip.ufull .ua { color: var(--fg3); }
 .rchip.ufull .ug img { height: 24px; } .rchip.ufull .ug b { font-size: 17px; }
 @media (max-width: 759px) { .rchip.ufull { gap: 8px 14px; padding: 9px 10px; } .rchip.ufull .ug { flex: 1 1 100%; justify-content: center; } .rchip.ufull .ui img { height: 17px; } .rchip.ufull .ug img { height: 22px; } .rchip.ufull .ui b { font-size: 14px; } .rchip.ufull .ug b { font-size: 16px; } .rchip.ufull .ua { display: none; } }
+/* tuiles compactes de la page Trails (au-dessus de l'index UTMB) */
+.tk.ttr { gap: 6px; } .tk.ttr .tki { padding: 7px 11px; border-radius: 12px; } .tk.ttr .rl { font-size: 10.5px; letter-spacing: .05em; } .tk.ttr b { font-size: 18px; }
+@media (max-width: 759px) { .tk.ttr b { font-size: 16px; } }
 
 </style>
 </head>
@@ -923,7 +926,7 @@ function renderTrails(app) {
   const tiles = [['🏁', 'Trails', nf(L.length)], ['📏', 'Distance', nf(sum(L.map(r => r.km))) + ' km'], ['⛰️', 'Dénivelé', nf(sum(L.map(r => r.dp))) + ' m'], ['⏱️', 'Temps', nf(sum(L.map(r => r.t)) / 3600) + ' h']];
   app.innerHTML = enteteH() + `
   <p class="muted">${L.length} trails terminés depuis ${L[0].yr}, dont ${ul} ultra${ul > 1 ? 's' : ''}.</p>
-  <div class="tk">${tiles.map(([e, l, v]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b></div>`).join('')}</div>
+  <div class="tk ttr">${tiles.map(([e, l, v]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b></div>`).join('')}</div>
   <div class="rchips">${UI.general ? `<a class="rchip ufull" href="${D.utmb.url}" target="_blank" rel="noopener" aria-label="Index UTMB ${UI.general}"><span class="ui ug"><img src="${UIMG('index', 1)}" alt="UTMB Index"><b>${UI.general}</b></span>${['20k', '50k', '100k', '100m'].filter(k => UI[k]).map(k => `<span class="ui"><img src="${UIMG(UCAT[k] + '_bg')}" alt="${UCAT[k]}"><b>${UI[k]}</b></span>`).join('')}<span class="ua">↗</span></a>` : ''}</div>
   <section class="card"><h2>📈 Au fil des années</h2><div class="seg tvs" role="group" aria-label="Mesure">${TV.filter(t => L.some(r => t.val(r) != null)).map(t => `<button data-tv="${t.id}" class="${t === tv ? 'on' : ''}" aria-pressed="${t === tv}">${ico(t.ico)}${t.l}</button>`).join('')}</div>
     ${tv.id === 'rk' ? '<p class="muted note">Place parmi les finishers : plus le point est haut, mieux tu es classé.</p>' : tv.id === 'us' ? '<p class="muted note">Score UTMB obtenu sur chaque course (sur 1 000).</p>' : ''}<div id="t-chart"></div>
