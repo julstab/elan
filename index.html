@@ -711,7 +711,8 @@ function drawRec(box, d) {
   for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) s += `<line class="gl" x1="${ml}" x2="${W - mr}" y1="${f(Y(v))}" y2="${f(Y(v))}"/><text class="ytick" x="${W - mr + 8}" y="${f(Y(v) + 4)}">${fTick(v)}</text>`;
   for (let y = RX0; y < RX1; y++) s += `<text class="xtick" x="${f(X(y + .5))}" y="${H - 6}">${y}</text>`;
   if (K) {
-    const up = [], dw = [], md = [];
+    const up = [], dw = [], md = [], lr = races[races.length - 1];
+    if (lr && lr.y < RNOW) { const q = f(X(lr.y)) + ',' + f(Y(lr.t)); up.push(q); dw.unshift(q); md.push(q); }   // projection partant de la dernière course : courbe continue
     for (let t = RNOW; t <= RX1 + 1e-9; t += 1 / 24) { const p = rproj(t, d), px = f(X(t)); up.push(px + ',' + f(Y(p.lo))); dw.unshift(px + ',' + f(Y(p.hi))); md.push(px + ',' + f(Y(p.med))); }
     s += `<polygon fill="${C}" opacity=".18" points="${up.concat(dw).join(' ')}"/><polyline fill="none" stroke="${C}" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round" points="${md.join(' ')}"/>`;
   }
