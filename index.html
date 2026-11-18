@@ -849,7 +849,7 @@ const niceStep = span => [.05, .1, .25, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1
 function drawTrails(box, v) {
   const P = TT.filter(r => v.val(r) != null); box.innerHTML = ''; box.classList.add('chart');
   if (!P.length) return;
-  const W = Math.max(box.clientWidth, 260), H = PCH(260, 350), ml = 8, mr = 58, mt = 34, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
+  const W = Math.max(box.clientWidth, 260), H = PCH(240, 330), ml = 8, mr = 58, mt = 14, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
   const vs = P.map(v.val), x0 = Math.floor(Math.min(...P.map(r => r.y))), x1 = Math.floor(Math.max(...P.map(r => r.y))) + 1;
   let lo = v.zero || v.inv ? 0 : Math.min(...vs), hi = Math.max(...vs); const st = niceStep(hi - lo);
   lo = v.zero || v.inv ? 0 : Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st; if (hi === lo) hi = lo + st;
