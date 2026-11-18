@@ -307,6 +307,13 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .agn { fill: var(--fg); font-size: 11px; font-weight: 600; } .agd { fill: var(--fg3); font-size: 11px; } .agj { fill: var(--fg2); font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
 @media (max-width: 759px) { .agn { font-size: 13px; } } .agld { fill: none; stroke: var(--fg3); stroke-width: 1; opacity: .6; }   /* noms des courses sur la frise À venir */
 
+/* graphique Trails : bandes d'années, moyenne, annotations */
+.tyb { fill: var(--fg); opacity: .028; }
+.tavg { stroke: var(--fg3); stroke-width: 1; stroke-dasharray: 3 4; opacity: .7; }
+.tavl { fill: var(--fg2); font-size: 10px; font-weight: 600; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+.tanl { fill: var(--fg2); font-size: 10.5px; font-weight: 700; text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+.tanl.bst { fill: var(--fg); }
+
 </style>
 </head>
 <body>
@@ -808,28 +815,53 @@ const tTip = r => `<b>${esc(r.nm)}</b><div class="te">${esc([tSub(r), fmtD(r.x, 
 
 const UCAT = { '20k': '20K', '50k': '50K', '100k': '100K', '100m': '100M' };
 const TV = [   // mesures du graphique « au fil des années »
-  { id: 'km', l: 'Km', ico: '📏', val: r => r.km, ax: v => nf(v) + ' km', zero: true },
-  { id: 'dp', l: 'D+', ico: '⛰️', val: r => r.dp, ax: v => nf(v) + ' m', zero: true },
-  { id: 'rk', l: 'Rang', ico: '🏅', val: r => r.top, ax: v => 'top ' + Math.round(v * 100) + ' %', inv: true },
-  { id: 'us', l: 'UTMB', ico: '🎯', val: r => r.us, ax: v => nf(v) }];
+  { id: 'km', l: 'Km', ico: '📏', val: r => r.km, ax: v => nf(v) + ' km', lb: r => nf(r.km) + ' km', zero: true },
+  { id: 'dp', l: 'D+', ico: '⛰️', val: r => r.dp, ax: v => nf(v) + ' m', lb: r => nf(r.dp) + ' m', zero: true },
+  { id: 'rk', l: 'Rang', ico: '🏅', val: r => r.top, ax: v => 'top ' + Math.round(v * 100) + ' %', lb: r => 'top ' + pct(r.top), inv: true },
+  { id: 'us', l: 'UTMB', ico: '🎯', val: r => r.us, ax: v => nf(v), lb: r => String(r.us) }];
+/* nom court pour les annotations du graphique */
+const tShort = r => { let n = r.nm.replace(/®/g, '').replace(/^(?:Le|La|Les)\s+/, '').replace(/^(?:Ultra-)?Trail\s+(?:du|des|de la|de l'|de)\s*/i, '').trim(); if (n.length > 16) n = n.split(' - ')[0]; return n; };
 const niceStep = span => [.05, .1, .25, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000].find(s => span / s <= 5) || 10000;
 
 function drawTrails(box, v) {
   const P = TT.filter(r => v.val(r) != null); box.innerHTML = ''; box.classList.add('chart');
   if (!P.length) return;
-  const W = Math.max(box.clientWidth, 260), H = PCH(250, 340), ml = 8, mr = 58, mt = 14, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
+  const W = Math.max(box.clientWidth, 260), H = PCH(260, 350), ml = 8, mr = 58, mt = 34, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
   const vs = P.map(v.val), x0 = Math.floor(Math.min(...P.map(r => r.y))), x1 = Math.floor(Math.max(...P.map(r => r.y))) + 1;
   let lo = v.zero || v.inv ? 0 : Math.min(...vs), hi = Math.max(...vs); const st = niceStep(hi - lo);
   lo = v.zero || v.inv ? 0 : Math.floor(lo / st) * st; hi = Math.ceil(hi / st) * st; if (hi === lo) hi = lo + st;
   const X = t => ml + (t - x0) / (x1 - x0) * pw, f = n => n.toFixed(1);
   const Y = val => v.inv ? mt + 8 + (val - lo) / (hi - lo) * (ph - 8) : mt + ph - (val - lo) / (hi - lo) * (ph - 8);   // classement : mieux classé = plus haut
   let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${v.l} de chaque trail au fil des années">`;
+  // dégradé vertical lié à la valeur : froid en bas, chaud en haut (plus long / mieux classé)
+  s += `<defs><linearGradient id="tgl" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="${mt + ph}" y2="${mt}"><stop offset="0" stop-color="#2DD4BF"/><stop offset=".5" stop-color="#3FA7F5"/><stop offset="1" stop-color="#FC5200"/></linearGradient>`
+    + `<linearGradient id="tga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#FC5200" stop-opacity=".32"/><stop offset=".55" stop-color="#3FA7F5" stop-opacity=".1"/><stop offset="1" stop-color="#2DD4BF" stop-opacity="0"/></linearGradient></defs>`;
+  for (let y = x0; y < x1; y += 2) s += `<rect class="tyb" x="${f(X(y))}" y="${mt}" width="${f(X(y + 1) - X(y))}" height="${ph}"/>`;   // une année sur deux légèrement teintée
   for (let g = lo; g <= hi + 1e-9; g += st) if (!(v.inv && g === 0)) s += `<line class="gl" x1="${ml}" x2="${W - mr}" y1="${f(Y(g))}" y2="${f(Y(g))}"/><text class="ytick" x="${W - mr + 8}" y="${f(Y(g) + 4)}">${v.ax(g)}</text>`;
   for (let y = x0; y < x1; y++) s += `<text class="xtick" x="${f(X(y + .5))}" y="${H - 6}">${y}</text>`;
   const pts = P.map(r => f(X(r.y)) + ',' + f(Y(v.val(r))));
-  if (v.zero) s += `<polygon fill="var(--acc)" opacity=".12" points="${pts.join(' ')} ${f(X(P[P.length - 1].y))},${mt + ph} ${f(X(P[0].y))},${mt + ph}"/>`;
-  s += `<polyline fill="none" stroke="var(--fg3)" stroke-width="1.5" stroke-linejoin="round" points="${pts.join(' ')}"/>`;
-  P.forEach(r => { s += `<g class="rdot" tabindex="0" data-i="${TT.indexOf(r)}" transform="translate(${f(X(r.y))},${f(Y(v.val(r)))})" aria-label="${esc(r.nm)}, ${fmtD(r.x, true)}"><circle r="12" fill="transparent"/><circle class="rm" r="5" fill="${r.cl.c}" stroke="var(--bg)" stroke-width="2"/></g>`; });
+  const base = v.inv ? mt + ph : Y(lo);
+  s += `<polygon fill="url(#tga)" points="${pts.join(' ')} ${f(X(P[P.length - 1].y))},${f(base)} ${f(X(P[0].y))},${f(base)}"/>`;
+  // moyenne
+  const avg = sum(vs) / vs.length, ya = Y(avg);
+  s += `<line class="tavg" x1="${ml}" x2="${W - mr}" y1="${f(ya)}" y2="${f(ya)}"/>`;
+  const avgT = `<text class="tavl" x="${ml + 2}" y="${f(ya - 5)}">moy. ${v.ax(v.id === 'rk' ? Math.round(avg * 100) / 100 : Math.round(avg))}</text>`;   // posé après les points pour rester lisible
+  s += `<polyline fill="none" stroke="url(#tgl)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${pts.join(' ')}"/>`;
+  // points : taille selon les km-effort, halo sur le dernier trail
+  const kmax = Math.max(...P.map(r => r.ke)), last = P[P.length - 1];
+  P.forEach(r => { const rr = (W < 500 ? 2.5 : 3.5) * (1 + Math.sqrt(r.ke / kmax)); s += `<g class="rdot" tabindex="0" data-i="${TT.indexOf(r)}" transform="translate(${f(X(r.y))},${f(Y(v.val(r)))})" aria-label="${esc(r.nm)}, ${fmtD(r.x, true)}"><circle r="12" fill="transparent"/>${r === last ? `<circle class="halo" r="${f(rr + 5)}" fill="${r.cl.c}"/>` : ''}<circle class="rm" r="${f(rr)}" fill="${r.cl.c}" stroke="var(--bg)" stroke-width="2"/></g>`; });
+  // annotations : les 3 meilleures valeurs + le dernier trail, sans chevauchement
+  s += avgT;
+  const best = [...P].sort((a, b) => v.inv ? v.val(a) - v.val(b) : v.val(b) - v.val(a)).slice(0, 3), boxes = [];
+  [...best, ...(best.includes(last) ? [] : [last])].forEach(r => {
+    const t = (best.includes(r) ? (v.inv ? '🏅 ' : '★ ') : '') + tShort(r) + ' · ' + v.lb(r), w = t.length * 5.6 + 6, px = X(r.y), py = Y(v.val(r));
+    const cx = Math.min(W - mr - w / 2, Math.max(ml + w / 2, px));
+    for (const ty of [py - 12, py + 20]) {
+      if (ty < 11 || ty > mt + ph - 2) continue;
+      if (boxes.some(b => Math.abs(b.x - cx) < (b.w + w) / 2 && Math.abs(b.y - ty) < 13)) continue;
+      boxes.push({ x: cx, y: ty, w }); s += `<text class="tanl${best.includes(r) ? ' bst' : ''}" x="${f(cx)}" y="${f(ty)}">${esc(t)}</text>`; break;
+    }
+  });
   box.insertAdjacentHTML('beforeend', s + '</svg>');
   const tip = el('div', 'tip'); tip.hidden = true; box.appendChild(tip);
   const svg = box.querySelector('svg');
