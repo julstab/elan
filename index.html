@@ -301,6 +301,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .tki .rk { font-size: 12px; color: var(--fg3); }
 .alld { fill: none; stroke: var(--fg3); stroke-width: 1; opacity: .7; } .alln { fill: var(--fg); font-size: 13px; font-weight: 700; }
 .allv { fill: var(--fg); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; } .allf { fill: var(--fg3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.alrl { stroke: var(--fg3); stroke-width: 1; stroke-dasharray: 1 4; stroke-linecap: round; opacity: .55; } .alp.on .alrl { stroke: var(--mc); opacity: .9; }
 .alp.on .alln, .alp.on .allv { fill: var(--mc); } .alp.on .alld { stroke: var(--mc); opacity: 1; }
 @media (max-width: 759px) { .tk.alt { gap: 6px; } .tk.alt .tki { padding: 7px 10px; border-radius: 12px; } .tk.alt .rl { font-size: 10px; letter-spacing: .05em; } .tk.alt b { font-size: 16px; } .tk.alt .rk { font-size: 11px; } }
 .agn { fill: var(--fg); font-size: 11px; font-weight: 600; } .agd { fill: var(--fg3); font-size: 11px; } .agj { fill: var(--fg2); font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -1128,6 +1129,10 @@ function alLadder(host) {
       <text class="alln" x="${lx + 12}" y="${y + 4}">${esc(r[0].replace(/ \(.*\)/, ''))}</text><text class="allv" x="${W - 2}" y="${y - 2}" text-anchor="end">${repA(r)}</text><text class="allf" x="${W - 2}" y="${y + 12}" text-anchor="end">FC ${fc}</text></g>`; }).join('');
   host.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="Échelle des allures avec les zones et les repères">${tk}${zb}${rows}</svg>`;
   const svg = host.querySelector('svg');
+  // ligne pointillée discrète entre le nom (à gauche) et l'allure / FC (à droite), mesurée une fois le texte posé
+  svg.querySelectorAll('.alp').forEach(g => { const n = g.querySelector('.alln'), v = g.querySelector('.allv'), fc = g.querySelector('.allf'); if (!n || !v) return;
+    const x1 = +n.getAttribute('x') + n.getComputedTextLength() + 8, x2 = W - 2 - Math.max(v.getComputedTextLength(), fc.getComputedTextLength()) - 8, y = +n.getAttribute('y') - 4;
+    if (x2 - x1 > 12) n.insertAdjacentHTML('beforebegin', `<line class="alrl" x1="${x1.toFixed(1)}" x2="${x2.toFixed(1)}" y1="${y}" y2="${y}"/>`); });
   return { show: i => { svg.querySelectorAll('.alp.on').forEach(e => e.classList.remove('on')); svg.querySelector(`.alp[data-i="${i}"]`).classList.add('on'); } };
 }
 
