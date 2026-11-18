@@ -265,6 +265,11 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
   .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
   .chips.ind .chip { justify-content: center; min-width: 0; padding-inline: 6px; }
 }
+@media (max-width: 759px) {   /* menu de l'Indicateur : grille 5 × 2 d'icônes, tout visible, plus de défilement */
+  .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 5px; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
+  .chips.ind .chip { flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 8px 1px 7px; border-radius: 12px; font-size: 10.5px; letter-spacing: -.01em; }
+  .chips.ind .chip .e { margin: 0; font-size: 21px; } .chips.ind .chip span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+}
 .fade { animation: fadein .28s ease-out backwards; }   /* rien ne reste appliqué après le fondu (l'infobulle de la courbe reste au-dessus) */
 @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
@@ -1198,7 +1203,11 @@ const enteteH = () => `
   <nav class="dock" aria-label="Vue">${VUES.map(([id, l, e]) => `<button data-ver="${id}" class="${S.ver === id ? 'on' : ''}" aria-pressed="${S.ver === id}">${ico(e)}${l}</button>`).join('')}</nav>`;
 
 /* ---------- vue Indicateur : un indicateur à la fois ---------- */
-const chipsH = () => `<nav class="chips scroll wrapd ind" style="--cols:${Math.ceil((M.length + 2) / 2)}" aria-label="Indicateur">${M.map(x => `<button class="chip${x.id === S.m ? ' on' : ''}" data-m="${x.id}">${ico(x.ico)}${x.short}</button>` + (x.id === 'vfc' ? `<button class="chip${S.m === 'allures' ? ' on' : ''}" data-m="allures">${ico('🎚️')}Allures</button>` : '')).join('')}<button class="chip${S.m === 'chaussures' ? ' on' : ''}" data-m="chaussures">${ico('👟')}Chaussures</button></nav>`;
+// menu des indicateurs : entraînement sur la 1re ligne, forme et repères sur la 2e (grille 5 × 2 d'icônes sur téléphone)
+const CHIPS = ['run', 'velo', 'heures', 'charge', 'renfo', 'vo2', 'vfc', 'sommeil', 'allures', 'chaussures'];
+const XTRA = { allures: ['🎚️', 'Allures'], chaussures: ['👟', 'Chaussures'] };
+const chipsH = () => `<nav class="chips scroll wrapd ind" style="--cols:${Math.ceil(CHIPS.length / 2)}" aria-label="Indicateur">${CHIPS.map(id => { const [e, l] = XTRA[id] || [MID[id].ico, MID[id].short];
+  return `<button class="chip${id === S.m ? ' on' : ''}" data-m="${id}">${ico(e)}<span>${l}</span></button>`; }).join('')}</nav>`;
 function renderIndicateur(app) {
   if (S.m === 'chaussures') return renderShoes(app);
   if (S.m === 'allures') return renderAllures(app);
