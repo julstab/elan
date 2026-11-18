@@ -295,6 +295,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .allv { fill: var(--fg); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; } .allf { fill: var(--fg3); font-size: 11px; font-variant-numeric: tabular-nums; }
 .alp.on .alln, .alp.on .allv { fill: var(--mc); } .alp.on .alld { stroke: var(--mc); opacity: 1; }
 @media (max-width: 759px) { .tk.alt { gap: 6px; } .tk.alt .tki { padding: 7px 10px; border-radius: 12px; } .tk.alt .rl { font-size: 10px; letter-spacing: .05em; } .tk.alt b { font-size: 16px; } .tk.alt .rk { font-size: 11px; } }
+.agn { fill: var(--fg); font-size: 11px; font-weight: 600; } .agld { stroke: var(--fg3); stroke-width: 1; opacity: .6; }   /* noms des courses sur la frise À venir */
 
 </style>
 </head>
@@ -957,16 +958,30 @@ const aDate = r => `${JOURS[toDate(r.x).getUTCDay()]} ${fmtD(r.x, true)}${r.est 
 const aChips = r => [`<span class="rchip ast" style="--c:${r.st.c}">${r.st.e} ${r.st.l}</span>`, `<span class="rchip">${r.ty.e} ${r.ty.l}</span>`, `<span class="rchip"><b>${nf(r.km, r.km % 1 ? 1 : 0)} km</b>${r.dp ? ' · ' + nf(r.dp) + ' m D+' : ''}</span>`, r.obj === 'A' ? '<span class="rchip">⭐ Objectif A</span>' : '', aRep(r) ? `<span class="rchip">${aRep(r)}</span>` : ''].filter(Boolean).join('');
 const aName = r => r.url ? `<a href="${r.url}" target="_blank" rel="noopener">${esc(r.nom)} ↗</a>` : esc(r.nom);
 
-function drawAgenda(box) {   // frise des mois à venir : un point par course, taille = km-effort, couleur = route / trail
+// nom court affiché sur la frise : « Semi-marathon de Cannes » → « Semi Cannes », « Trail des Celtes » → « Celtes »
+const aCourt = r => r.nom.split(' · ')[0].replace(/\s*«.*?»\s*/g, ' ').trim()
+  .replace(/^Semi-marathon\s+(?:de la|de l'|du|des|de|d')\s*/i, 'Semi ').replace(/^(Ekiden)\s+(?:de la|de l'|du|des|de|d')\s*/i, '$1 ')
+  .replace(/^(?:Trail|Courses?)\s+(?:de la|de l'|du|des|de|d')\s*/i, '');
+function drawAgenda(box) {   // frise des mois à venir : un point par course (taille = km-effort, couleur = route / trail), nom de la course au-dessus ou en dessous
   box.innerHTML = ''; if (!AG.length) return;
-  const W = Math.max(box.clientWidth, 260), H = 70, ml = 10, mr = 10, y = 30, x0 = TODAY, x1 = Math.max(AG[AG.length - 1].x + 10, TODAY + 60), f = n => n.toFixed(1);
+  const W = Math.max(box.clientWidth, 260), ml = 10, mr = 10, x0 = TODAY, x1 = Math.max(AG[AG.length - 1].x + 10, TODAY + 60), f = n => n.toFixed(1);
   const X = x => ml + (x - x0) / (x1 - x0) * (W - ml - mr);
+  // étiquettes : chaque nom prend le premier étage libre (au-dessus 1, en dessous 1, au-dessus 2…) pour ne jamais en chevaucher un autre
+  const cx = document.createElement('canvas').getContext('2d'); cx.font = '600 11px ' + getComputedStyle(document.body).fontFamily;
+  const lanes = {}, L = AG.map(r => { const t = aCourt(r), w = cx.measureText(t).width, xc = X(r.x), a = Math.min(Math.max(xc - w / 2, ml), W - mr - w);
+    for (let k = 0; ; k++) { const id = (k % 2 ? -1 : 1) * (Math.floor(k / 2) + 1), used = lanes[id] || [];
+      if (!used.some(([u, v]) => a < v + 8 && a + w > u - 8)) { (lanes[id] = used).push([a, a + w]); return { r, t, a, w, xc, id }; } } });
+  const up = Math.max(0, ...L.map(l => l.id)), dw = Math.max(0, ...L.map(l => -l.id)), lh = 16;
+  const y = 14 + up * lh + 10, ym = y + 18, H = ym + 6 + dw * lh + (dw ? 8 : 0);
+  const ly = id => id > 0 ? y - 12 - (id - 1) * lh : ym + 12 + (-id - 1) * lh;   // ligne de base du texte de chaque étage
   let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Frise des courses à venir"><line x1="${ml}" x2="${W - mr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="2"/>`;
   for (let d = toDate(x0), m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)); dn(m.toISOString().slice(0, 10)) <= x1; m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1))) {
     const m0 = dn(m.toISOString().slice(0, 10)), xx = X(m0), xm = X(Math.min(m0 + 15, x1 - 3));   // nom du mois au milieu du mois
-    s += `<line x1="${f(xx)}" x2="${f(xx)}" y1="${y - 5}" y2="${y + 5}" stroke="var(--fg3, #666)"/>` + (xm < W - mr - 8 ? `<text class="xtick" x="${f(xm)}" y="${H - 6}">${MCOURT[m.getUTCMonth()]}</text>` : '');
+    s += `<line x1="${f(xx)}" x2="${f(xx)}" y1="${y - 5}" y2="${y + 5}" stroke="var(--fg3, #666)"/>` + (xm < W - mr - 8 ? `<text class="xtick" x="${f(xm)}" y="${ym}">${MCOURT[m.getUTCMonth()]}</text>` : '');
   }
-  s += `<text class="ytick" x="${ml}" y="${y - 12}">auj.</text><circle cx="${ml}" cy="${y}" r="3" fill="var(--fg2)"/>`;
+  s += `<circle cx="${ml}" cy="${y}" r="3" fill="var(--fg2)"/>`;
+  L.forEach(({ r, t, a, w, xc, id }) => { const tY = ly(id), ey = id > 0 ? tY + 3 : tY - 11;   // trait du point jusqu'au nom
+    s += `<line class="agld" x1="${f(xc)}" x2="${f(Math.min(Math.max(xc, a + 2), a + w - 2))}" y1="${y}" y2="${f(ey)}"/><text class="agn" x="${f(a)}" y="${f(tY)}">${esc(t)}</text>`; });
   AG.forEach((r, i) => { const rr = 4 + 6 * Math.sqrt(Math.max(0, r.ke - 5) / 160);
     s += `<a href="#ag-${i}"><circle cx="${f(X(r.x))}" cy="${y}" r="${f(rr)}" fill="${r.ty.c}" fill-opacity="${r.statut === 'inscrit' ? 1 : .55}" stroke="var(--bg)" stroke-width="1.5"><title>${esc(r.nom)} · ${fmtD(r.x, true)}</title></circle></a>`; });
   box.insertAdjacentHTML('beforeend', s + '</svg>');
