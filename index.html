@@ -314,6 +314,9 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .tanl { fill: var(--fg2); font-size: 10.5px; font-weight: 700; text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
 .tanl.bst { fill: var(--fg); }
 @media (max-width: 759px) { .tk.alt .nomob { display: none; } }   /* seuils lactique/aérobie : PC seulement (déjà dans l'échelle) */
+/* Prochain dossard : badges sur une seule ligne */
+.anext .rchips { flex-wrap: nowrap; gap: 5px; } .anext .rchip { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 759px) { .anext .rchips { gap: 4px; } .anext .rchip { padding: 3px 6px; font-size: 11px; letter-spacing: -.01em; } }
 
 </style>
 </head>
@@ -1005,7 +1008,7 @@ const aRep = r => {   // projection du modèle Records pour un semi ou un 10 km 
   return '';
 };
 const aDate = r => `${JOURS[toDate(r.x).getUTCDay()]} ${fmtD(r.x, true)}${r.est ? ' (date estimée)' : ''}`;
-const aChips = (r, noObj) => [`<span class="rchip ast" style="--c:${r.st.c}">${r.st.e} ${r.st.l}</span>`, `<span class="rchip">${r.ty.e} ${r.ty.l}</span>`, `<span class="rchip"><b>${nf(r.km, r.km % 1 ? 1 : 0)} km</b>${r.dp ? ' · ' + nf(r.dp) + ' m D+' : ''}</span>`, r.obj === 'A' && !noObj ? '<span class="rchip">⭐ Objectif A</span>' : '', aRep(r) ? `<span class="rchip">${aRep(r)}</span>` : ''].filter(Boolean).join('');
+const aChips = r => [`<span class="rchip ast" style="--c:${r.st.c}">${r.st.e} ${r.st.l}</span>`, `<span class="rchip">${r.ty.e} ${r.ty.l}</span>`, `<span class="rchip"><b>${nf(r.km, r.km % 1 ? 1 : 0)} km</b>${r.dp ? ' · ' + nf(r.dp) + ' m D+' : ''}</span>`, aRep(r) ? `<span class="rchip">${aRep(r)}</span>` : ''].filter(Boolean).join('');
 const aName = r => r.url ? `<a href="${r.url}" target="_blank" rel="noopener">${esc(r.nom)} ↗</a>` : esc(r.nom);
 
 // téléphone : frise verticale (le temps descend), mois à gauche à leur vraie place ; chaque course sur sa propre ligne à droite
@@ -1069,7 +1072,7 @@ function renderAgenda(app) {
       + `<div class="abody"><p class="rn">${aName(r)}</p><p class="rk">${esc(r.lieu || '')}${r.est ? ' · date estimée' : ''}</p><div class="rchips">${aChips(r)}</div>${r.note ? `<p class="rk anote">${esc(r.note)}</p>` : ''}</div>`
       + `<div class="aj">J-${r.x - TODAY}</div></div>`; };
   app.innerHTML = enteteH() + `
-  <section class="card anext" style="--c:${nx.ty.c}"><p class="lbl">🎽 Prochain dossard</p><h2>${aName(nx)}</h2><p class="acd"><b>${jours(nx.x - TODAY)}</b> · ${aDate(nx)}</p><div class="rchips">${aChips(nx, true)}</div></section>
+  <section class="card anext" style="--c:${nx.ty.c}"><p class="lbl">🎽 Prochain dossard</p><h2>${aName(nx)}</h2><p class="acd"><b>${jours(nx.x - TODAY)}</b> · ${aDate(nx)}</p><div class="rchips">${aChips(nx)}</div></section>
   <section class="card"><h2>🗓️ Les mois à venir</h2><div id="ag-chart"></div>
     <div class="legend">${Object.values(ATYPE).map(t => `<span><i class="pt" style="--c:${t.c}"></i>${t.l}</span>`).join('')}<span>plein = inscrit</span><span>taille = km-effort</span></div></section>
   <section class="card"><h2>📋 Dossards</h2><div class="legend"><span><i class="ains"></i>Inscrit</span><span><i class="aoth"></i>Pas encore inscrit</span></div>${Object.keys(months).map(k => { const [yy, mm] = k.split('-').map(Number); return `<div class="tyh"><h3>${MOISC[mm - 1]} ${yy}</h3><span>${months[k].length} course${months[k].length > 1 ? 's' : ''}</span></div>${months[k].map(rowH).join('')}`; }).join('')}</section>
