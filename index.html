@@ -688,6 +688,8 @@ const yrOf = iso => { const [y, m, d] = iso.split('-').map(Number); return y + (
 const p2 = n => String(n).padStart(2, '0');
 const fT = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? h + 'h' + p2(m) + '′' + p2(ss) + '″' : m + '′' + p2(ss) + '″'; };
 const fTick = s => { s = Math.round(s); if (s % 60) return fT(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h' + p2(m) : m + '′'; };
+const NAIS = '1981-12-14';   // date de naissance : âge le jour de chaque course
+const ageAt = iso => { const [y, m, d] = iso.split('-').map(Number), [by, bm, bd] = NAIS.split('-').map(Number); return y - by - (m < bm || (m === bm && d < bd) ? 1 : 0); };
 const ord = n => n === 1 ? '1er' : n + 'e';
 const MEDAL = { 1: ' 🥇', 2: ' 🥈', 3: ' 🥉' };
 const fSc = r => r.sc ? ord(r.sc[0]) + ' / ' + nf(r.sc[1]) : '';
@@ -701,7 +703,7 @@ const RR = (() => {
 })();
 const RT0 = yrOf(REC.t0), RNOW = yrOf(REC.today), RX0 = Math.floor(Math.min(...RR.map(r => r.y))), RX1 = Math.ceil(RNOW) + 1;
 const rproj = (t, d) => {
-  const M = REC.M, k = REC.K[d], dt = Math.max(0, t - RNOW), b = M.Linf + M.A * Math.exp(-(t - RT0) / M.tau), a = 1 + M.age * dt, w = .004 + .004 * dt;
+  const M = REC.M, k = REC.K[d], dt = Math.max(0, t - RNOW), b = M.Linf + M.A * Math.exp(-(t - RT0) / M.tau), a = 1, w = .004 + .004 * dt;
   return { med: b * a * k.med, lo: b * (1 - w) * k.lo, hi: b * a * (1 + w) * k.hi };
 };
 
@@ -787,8 +789,8 @@ function renderRecords(app) {
   <div id="r-chart"></div>
   <div class="legend"><span><i class="pt hl" style="--c:${C}"></i>RP actuel</span><span><i class="pt" style="--c:${C}"></i>Ancien RP</span><span><i class="op" style="--c:${C}"></i>Course sans record</span>${K ? `<span><i class="dash" style="--c:${C}"></i>Projection</span><span><i style="background:${C};opacity:.3"></i>Fourchette</span>` : ''}<span>↑ plus rapide</span></div>
   ${p ? `<section class="card"><h2>${d === '21' ? '🌴 Semi de Cannes' : '📈 Projection'} · ${MOIS[tg[1] - 1]} ${tg[0]}</h2><p class="pj"><b>${fT(p.med)}</b><span class="muted">fourchette ${fT(p.lo)} – ${fT(p.hi)}</span></p>
-    <details class="how"><summary>Comment la projection est calculée</summary><ul><li>Courbe à rendements décroissants ajustée sur les quatre 10 km officiels (Illkirch 2025 corrigé de son parcours sinueux).</li><li>5 km et semi déduits du 10 km par la formule de Riegel et les rapports entre distances mesurés en 2025-2026.</li><li>Âge : environ −0,6 % par an. Fourchette : de « tout s’aligne » à « année tournée vers le trail ».</li><li>Projection statistique, pas un objectif.</li></ul></details></section>` : ''}
-  <section class="card"><h2>⏱️ Tous les chronos – ${cfg.s}</h2><div class="races">${byT.map((r, i) => `<div class="rrow${r.cur ? ' cur' : ''}"><span class="rd">${i + 1}</span><div><p class="rt"><b>${fT(r.t)}</b>${r.cur ? '<span class="rb now">🏆 RP actuel</span>' : r.rp ? '<span class="rb">Ancien RP</span>' : ''}${r.watch ? '<span class="rb">montre</span>' : ''}</p><p class="rn">${r.e ? r.e + ' ' : ''}${r.id ? `<a href="${STRAVA}${r.id}" target="_blank" rel="noopener">${esc(r.name)} ↗</a>` : esc(r.name)}</p><p class="rk">${esc([r.place, fmtD(r.x, true), r.detail].filter(Boolean).join(' · '))}</p></div><div class="rr"><span>${fSc(r) || (r.pending ? 'à venir' : '')}</span><span>${fCat(r)}</span></div></div>`).join('')}</div></section>
+    <details class="how"><summary>Comment la projection est calculée</summary><ul><li>Courbe à rendements décroissants ajustée sur les quatre 10 km officiels (Illkirch 2025 corrigé de son parcours sinueux).</li><li>5 km et semi déduits du 10 km par la formule de Riegel et les rapports entre distances mesurés en 2025-2026.</li><li>Pas de baisse liée à l’âge : tu progresses encore (course à pied depuis 2020), la projection reste stable. Fourchette : de « tout s’aligne » à « année tournée vers le trail ».</li><li>Projection statistique, pas un objectif.</li></ul></details></section>` : ''}
+  <section class="card"><h2>⏱️ Tous les chronos – ${cfg.s}</h2><div class="races">${byT.map((r, i) => `<div class="rrow${r.cur ? ' cur' : ''}"><span class="rd">${i + 1}</span><div><p class="rt"><b>${fT(r.t)}</b>${r.cur ? '<span class="rb now">🏆 RP actuel</span>' : r.rp ? '<span class="rb">Ancien RP</span>' : ''}${r.watch ? '<span class="rb">montre</span>' : ''}</p><p class="rn">${r.e ? r.e + ' ' : ''}${r.id ? `<a href="${STRAVA}${r.id}" target="_blank" rel="noopener">${esc(r.name)} ↗</a>` : esc(r.name)}</p><p class="rk">${esc([r.place, fmtD(r.x, true), ageAt(r.date) + ' ans', r.detail].filter(Boolean).join(' · '))}</p></div><div class="rr"><span>${fSc(r) || (r.pending ? 'à venir' : '')}</span><span>${fCat(r)}</span></div></div>`).join('')}</div></section>
   <p class="muted simn">Semi d’Illkirch 2023 en temps montre · chronos à jour au ${fmtD(dn(REC.today), true)}.</p>`;
   app.style.setProperty('--mc', C);
   drawRec(app.querySelector('#r-chart'), d);
