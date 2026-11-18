@@ -1005,18 +1005,14 @@ const aRep = r => {   // projection du modèle Records pour un semi ou un 10 km 
   return '';
 };
 const aDate = r => `${JOURS[toDate(r.x).getUTCDay()]} ${fmtD(r.x, true)}${r.est ? ' (date estimée)' : ''}`;
-const aChips = r => [`<span class="rchip ast" style="--c:${r.st.c}">${r.st.e} ${r.st.l}</span>`, `<span class="rchip">${r.ty.e} ${r.ty.l}</span>`, `<span class="rchip"><b>${nf(r.km, r.km % 1 ? 1 : 0)} km</b>${r.dp ? ' · ' + nf(r.dp) + ' m D+' : ''}</span>`, r.obj === 'A' ? '<span class="rchip">⭐ Objectif A</span>' : '', aRep(r) ? `<span class="rchip">${aRep(r)}</span>` : ''].filter(Boolean).join('');
+const aChips = (r, noObj) => [`<span class="rchip ast" style="--c:${r.st.c}">${r.st.e} ${r.st.l}</span>`, `<span class="rchip">${r.ty.e} ${r.ty.l}</span>`, `<span class="rchip"><b>${nf(r.km, r.km % 1 ? 1 : 0)} km</b>${r.dp ? ' · ' + nf(r.dp) + ' m D+' : ''}</span>`, r.obj === 'A' && !noObj ? '<span class="rchip">⭐ Objectif A</span>' : '', aRep(r) ? `<span class="rchip">${aRep(r)}</span>` : ''].filter(Boolean).join('');
 const aName = r => r.url ? `<a href="${r.url}" target="_blank" rel="noopener">${esc(r.nom)} ↗</a>` : esc(r.nom);
 
-// nom court affiché sur la frise : « Semi-marathon de Cannes » → « Semi Cannes », « Trail des Celtes » → « Celtes »
-const aCourt = r => r.nom.split(' · ')[0].replace(/\s*«.*?»\s*/g, ' ').trim()
-  .replace(/^Semi-marathon\s+(?:de la|de l'|du|des|de|d')\s*/i, 'Semi ').replace(/^(Ekiden)\s+(?:de la|de l'|du|des|de|d')\s*/i, '$1 ')
-  .replace(/^(?:Trail|Courses?)\s+(?:de la|de l'|du|des|de|d')\s*/i, '');
 // téléphone : frise verticale (le temps descend), mois à gauche à leur vraie place ; chaque course sur sa propre ligne à droite
 // (nom, date, km), reliée par un trait à son point sur l'axe : rien ne se serre ni ne se chevauche
 function drawAgendaV(box) {
   const W = Math.max(box.clientWidth, 260), x0 = TODAY, x1 = Math.max(AG[AG.length - 1].x + 10, TODAY + 60), f = n => n.toFixed(1);
-  const rh = 40, mt = 14, H = mt * 2 + rh * AG.length, ax = 46, lx = 92;
+  const rh = 40, mt = 14, H = mt * 2 + rh * AG.length, ax = 40, lx = 74;   // marge gauche resserrée : place pour les noms complets
   const Y = x => mt + rh / 2 + (x - x0) / (x1 - x0) * (H - 2 * mt - rh);
   let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Frise des courses à venir"><line x1="${ax}" x2="${ax}" y1="${mt}" y2="${H - mt}" stroke="var(--line)" stroke-width="2"/>`;
   for (let d = toDate(x0), m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)); dn(m.toISOString().slice(0, 10)) <= x1; m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1))) {
@@ -1027,9 +1023,14 @@ function drawAgendaV(box) {
   AG.forEach((r, i) => { const py = Y(r.x), y = mt + rh * i + rh / 2, rr = 4 + 5 * Math.sqrt(Math.max(0, r.ke - 5) / 160), op = r.statut === 'inscrit' ? 1 : .55, d = toDate(r.x);
     s += `<a href="#ag-${i}"><path class="agld" d="M${ax},${f(py)} C${ax + 26},${f(py)} ${lx - 34},${f(y)} ${lx - 12},${f(y)}"/>`
       + `<circle cx="${ax}" cy="${f(py)}" r="3" fill="${r.ty.c}" fill-opacity="${op}"/><circle cx="${lx}" cy="${f(y)}" r="${f(rr)}" fill="${r.ty.c}" fill-opacity="${op}" stroke="var(--bg)" stroke-width="1.5"/>`
-      + `<text class="agn" x="${lx + 14}" y="${f(y - 2)}">${esc(aCourt(r))}</text><text class="agd" x="${lx + 14}" y="${f(y + 12)}">${JOURS[d.getUTCDay()]} ${d.getUTCDate()} ${MCOURT[d.getUTCMonth()]} · ${nf(r.km, r.km % 1 ? 1 : 0)} km${r.dp ? ' · ' + nf(r.dp) + ' m D+' : ''}</text>`
+      + `<text class="agn" x="${lx + 14}" y="${f(y - 2)}">${esc(r.nom)}</text><text class="agd" x="${lx + 14}" y="${f(y + 12)}">${JOURS[d.getUTCDay()]} ${d.getUTCDate()} ${MCOURT[d.getUTCMonth()]} · ${nf(r.km, r.km % 1 ? 1 : 0)} km${r.dp ? ' · ' + nf(r.dp) + ' m D+' : ''}</text>`
       + `<text class="agj" x="${W - 2}" y="${f(y - 2)}" text-anchor="end">J-${r.x - TODAY}</text></a>`; });
   box.insertAdjacentHTML('beforeend', s + '</svg>');
+  // nom complet trop long pour la ligne : police réduite (jusqu'à 10,5 px), puis coupé avec « … » en dernier recours
+  box.querySelectorAll('a').forEach(a => { const n = a.querySelector('.agn'), j = a.querySelector('.agj'), room = W - 2 - j.getComputedTextLength() - 8 - (lx + 14);
+    let w = n.getComputedTextLength(); if (w <= room) return;
+    const fs = parseFloat(getComputedStyle(n).fontSize), nf2 = Math.max(10.5, fs * room / w); n.style.fontSize = nf2 + 'px'; w = n.getComputedTextLength();
+    if (w > room) { let t = n.textContent; while (t.length > 4 && n.getComputedTextLength() > room) { t = t.slice(0, -1); n.textContent = t.trimEnd() + '…'; } } });
 }
 function drawAgenda(box) {   // frise des mois à venir : un point par course (taille = km-effort, couleur = route / trail), nom de la course au-dessus ou en dessous
   box.innerHTML = ''; if (!AG.length) return;
@@ -1038,7 +1039,7 @@ function drawAgenda(box) {   // frise des mois à venir : un point par course (t
   const X = x => ml + (x - x0) / (x1 - x0) * (W - ml - mr);
   // étiquettes : chaque nom prend le premier étage libre (au-dessus 1, en dessous 1, au-dessus 2…) pour ne jamais en chevaucher un autre
   const cx = document.createElement('canvas').getContext('2d'); cx.font = '600 11px ' + getComputedStyle(document.body).fontFamily;
-  const lanes = {}, L = AG.map(r => { const t = aCourt(r), w = cx.measureText(t).width, xc = X(r.x), a = Math.min(Math.max(xc - w / 2, ml), W - mr - w);
+  const lanes = {}, L = AG.map(r => { const t = r.nom, w = cx.measureText(t).width, xc = X(r.x), a = Math.min(Math.max(xc - w / 2, ml), W - mr - w);
     for (let k = 0; ; k++) { const id = (k % 2 ? -1 : 1) * (Math.floor(k / 2) + 1), used = lanes[id] || [];
       if (!used.some(([u, v]) => a < v + 8 && a + w > u - 8)) { (lanes[id] = used).push([a, a + w]); return { r, t, a, w, xc, id }; } } });
   const up = Math.max(0, ...L.map(l => l.id)), dw = Math.max(0, ...L.map(l => -l.id)), lh = 16;
@@ -1060,7 +1061,7 @@ function drawAgenda(box) {   // frise des mois à venir : un point par course (t
 
 function renderAgenda(app) {
   if (!AG.length) { app.innerHTML = enteteH() + '<p class="muted">Aucune course à venir.</p>'; return; }
-  const nx = AG[0], obj = AG.find(r => r.obj === 'A' && r !== nx), months = {};
+  const nx = AG[0], months = {};
   AG.forEach((r, i) => { r.i = i; const k = r.d.slice(0, 7); (months[k] = months[k] || []).push(r); });
   const rowH = r => { const pv = AG[r.i - 1];
     return (pv ? `<p class="agap">↕ ${semaines(r.x - pv.x)} plus tard</p>` : '')
@@ -1068,8 +1069,7 @@ function renderAgenda(app) {
       + `<div class="abody"><p class="rn">${aName(r)}</p><p class="rk">${esc(r.lieu || '')}${r.est ? ' · date estimée' : ''}</p><div class="rchips">${aChips(r)}</div>${r.note ? `<p class="rk anote">${esc(r.note)}</p>` : ''}</div>`
       + `<div class="aj">J-${r.x - TODAY}</div></div>`; };
   app.innerHTML = enteteH() + `
-  <section class="card anext" style="--c:${nx.ty.c}"><p class="lbl">🎽 Prochain dossard</p><h2>${aName(nx)}</h2><p class="acd"><b>${jours(nx.x - TODAY)}</b> · ${aDate(nx)}</p><div class="rchips">${aChips(nx)}</div>
-    ${obj ? `<p class="muted">⭐ Objectif majeur : <b>${esc(obj.nom)}</b> ${jours(obj.x - TODAY)} (${fmtD(obj.x, true)}${obj.est ? ', date estimée' : ''}).</p>` : ''}</section>
+  <section class="card anext" style="--c:${nx.ty.c}"><p class="lbl">🎽 Prochain dossard</p><h2>${aName(nx)}</h2><p class="acd"><b>${jours(nx.x - TODAY)}</b> · ${aDate(nx)}</p><div class="rchips">${aChips(nx, true)}</div></section>
   <section class="card"><h2>🗓️ Les mois à venir</h2><div id="ag-chart"></div>
     <div class="legend">${Object.values(ATYPE).map(t => `<span><i class="pt" style="--c:${t.c}"></i>${t.l}</span>`).join('')}<span>plein = inscrit</span><span>taille = km-effort</span></div></section>
   <section class="card"><h2>📋 Dossards</h2><div class="legend"><span><i class="ains"></i>Inscrit</span><span><i class="aoth"></i>Pas encore inscrit</span></div>${Object.keys(months).map(k => { const [yy, mm] = k.split('-').map(Number); return `<div class="tyh"><h3>${MOISC[mm - 1]} ${yy}</h3><span>${months[k].length} course${months[k].length > 1 ? 's' : ''}</span></div>${months[k].map(rowH).join('')}`; }).join('')}</section>
