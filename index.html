@@ -75,7 +75,6 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .chip { display: inline-flex; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 6px 11px 6px 9px; font-size: 13px; font-weight: 600; letter-spacing: .01em; color: var(--fg2); white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
 .chip:hover { border-color: #5a5a5f; color: var(--fg); }
 .chip.on { background: color-mix(in srgb, var(--mc, var(--acc)) 16%, transparent); border-color: var(--mc, var(--acc)); color: var(--fg); }
-.chip[data-row]:not(.on) .e { filter: grayscale(1); opacity: .55; }
 .ranges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 3px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
 .ranges button { background: none; border: 0; border-radius: 9px; padding: 7px 4px; font-size: 13px; font-weight: 700; color: var(--fg2); white-space: nowrap; }
 .ranges button:hover { color: var(--fg); }
@@ -140,10 +139,9 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .tip .tw { margin-top: 6px; border-top: 1px solid #4A4A4A; }
 .tip .tx { position: absolute; top: 0; right: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: 10px; color: var(--fg2); font-size: 15px; pointer-events: auto; cursor: pointer; }
 .tip .tx:hover, .tip .tx:active { color: var(--fg); background: rgba(255, 255, 255, .08); } .tip .tx + b { display: block; padding-right: 24px; }
-.tip .tpl, .cdate .tpl { color: var(--fg2); } .tip .tpl em { font-style: normal; font-weight: 600; } .tip .tpl span { white-space: nowrap; }   /* séance prévue : une ligne, coupée par « … » */
+.tip .tpl { color: var(--fg2); } .tip .tpl em { font-style: normal; font-weight: 600; } .tip .tpl span { white-space: nowrap; }   /* séance prévue : une ligne, coupée par « … » */
 .tip .tds { margin: 2px 0 2px; font-size: 11.5px; line-height: 1.35; color: var(--fg2); }
 .tip .ta { display: flex; gap: 8px; margin: 0; padding: 6px 0 0; border: 0; } .tip .ta span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; } .tip .ta em { font-style: normal; color: var(--fg2); font-weight: 600; }
-.cdate .tl { display: inline-block; max-width: min(46vw, 260px); overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 a.rn, .rn a { color: var(--fg); text-decoration: none; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--fg2); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -172,17 +170,6 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 .rd { color: var(--fg2); font-size: 12px; } .rn { font-weight: 600; overflow-wrap: anywhere; }
 .race b { font-variant-numeric: tabular-nums; text-align: right; } .rk, .rp { color: var(--fg2); font-size: 12px; } .rp { text-align: right; }
 
-/* vue Frise */
-.stick { position: sticky; top: calc(max(8px, env(safe-area-inset-top, 0px)) + 50px); z-index: 20; background: var(--bg); padding-block: 8px; margin-block: -8px; border-bottom: 1px solid var(--line); display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
-.stick .ranges { flex: 1; max-width: 420px; }
-.cdate { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-.hint { margin-top: -4px; }
-.rows { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 6px 12px; }
-.row { display: grid; grid-template-columns: 1fr; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); min-width: 0; }
-.row:first-child { border-top: 0; }
-.rh { display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; min-width: 0; }
-.rv { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--acc); }
-.rc { min-width: 0; }
 /* vue Records */
 .rtiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .rtile { display: flex; flex-direction: column; gap: 1px; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 11px 14px; color: var(--fg2); min-width: 0; transition: background .15s, border-color .15s; }
@@ -270,9 +257,6 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .agap { font-size: 12px; color: var(--fg2); text-align: center; padding: 2px 0; }
 @media (min-width: 760px) {
   .tk { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .row { grid-template-columns: 190px minmax(0, 1fr); gap: 16px; align-items: center; }
-  .rh { flex-direction: column; align-items: flex-start; gap: 4px; }
-  .rv { font-size: 22px; }
   .chips.scroll.wrapd { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
   h1 { font-size: 32px; } .ctot b { font-size: 26px; }
   .sbr { grid-template-columns: 210px minmax(0, 1fr) 64px; grid-template-areas: "n b v"; } .sbr b { text-align: right; }   /* barres des chaussures : nom | barre | km */
@@ -1187,12 +1171,12 @@ function renderAllures(app) {
 }
 
 /* ---------- état ---------- */
-const VUES = [['indicateur', 'Indicateur', '🎯'], ['frise', 'Frise', '🎞️'], ['records', 'Records', '🏆'], ['trails', 'Trails', '⛰️'], ['agenda', 'À venir', '🎽']];
-const S = { ver: 'indicateur', range: '3m', races: true, compare: false, sim: false, m: 'run', rec: '21', tv: 'km', view: {}, mode: {}, rows: new Set(['run', 'heures', 'charge', 'vo2', 'vfc', 'sommeil', 'renfo']) };
-try { const p = JSON.parse(localStorage.getItem('tableau-forme') || '{}'); if (p.range) S.range = p.range; if (p.ver) S.ver = p.ver; if (p.m && (MID[p.m] || p.m === 'chaussures' || p.m === 'allures')) S.m = p.m; if (p.sim) S.sim = true; if (p.rec) S.rec = p.rec; if (Array.isArray(p.rows)) S.rows = new Set(p.rows.filter(id => MID[id])); } catch (e) {}
+const VUES = [['indicateur', 'Indicateur', '🎯'], ['records', 'Records', '🏆'], ['trails', 'Trails', '⛰️'], ['agenda', 'À venir', '🎽']];
+const S = { ver: 'indicateur', range: '3m', races: true, compare: false, sim: false, m: 'run', rec: '21', tv: 'km', view: {}, mode: {} };
+try { const p = JSON.parse(localStorage.getItem('tableau-forme') || '{}'); if (p.range) S.range = p.range; if (p.ver) S.ver = p.ver; if (p.m && (MID[p.m] || p.m === 'chaussures' || p.m === 'allures')) S.m = p.m; if (p.sim) S.sim = true; if (p.rec) S.rec = p.rec; } catch (e) {}
 const hv = (location.hash || '').replace('#', ''); if (VUES.some(v => v[0] === hv)) S.ver = hv;
 if (!VUES.some(v => v[0] === S.ver)) S.ver = 'indicateur';
-const save = () => { try { localStorage.setItem('tableau-forme', JSON.stringify({ range: S.range, ver: S.ver, m: S.m, sim: S.sim, rec: S.rec, rows: [...S.rows] })); } catch (e) {} };
+const save = () => { try { localStorage.setItem('tableau-forme', JSON.stringify({ range: S.range, ver: S.ver, m: S.m, sim: S.sim, rec: S.rec })); } catch (e) {} };
 const stOf = id => ({ view: S.view[id], mode: S.mode[id], compare: S.compare });
 function specOf(m, R, extra) {
   const sp = m.spec(R, Object.assign(stOf(m.id), extra));
@@ -1206,7 +1190,6 @@ const rangesH = () => `<div class="ranges" role="group" aria-label="Période">${
 const viewsH = (m, cls = '') => m.views ? `<div class="seg ${cls}" role="group" aria-label="Vue">${m.views.map(v => `<button class="${(S.view[m.id] || m.views[0].id) === v.id ? 'on' : ''}" data-view="${v.id}" data-for="${m.id}">${ico(v.ico)}${v.l}</button>`).join('')}</div>` : '';
 const modeH = m => m.modes ? `<div class="seg" role="group" aria-label="Type de graphique">${[['courbe', 'Courbe', '📈'], ['barres', 'Barres', '📊']].map(([k, l, e]) => `<button data-mode="${k}" data-for="${m.id}" class="${modeOf(m) === k ? 'on' : ''}">${ico(e)}${l}</button>`).join('')}</div>` : '';
 const togH = (key, e, label, off) => `<button class="tog${S[key] && !off ? ' on' : ''}" data-tog="${key}" aria-pressed="${!!S[key] && !off}"${off ? ' disabled title="Pas de projection pour cet indicateur"' : ''}>${ico(e)}${label}<i></i></button>`;
-const simH = R => !R.ws ? '' : `<p class="muted simn">${D.plan.length ? `📅 Simulation jusqu'au ${fmtD(R.xe)} avec les séances prévues sur Nolio. Les durées non renseignées et la charge sont estimées d'après tes 12 dernières semaines.` : '📅 Aucune séance prévue sur Nolio pour les semaines à venir.'}</p>`;
 function racesH(R) {
   const L = RACES.filter(r => r.x >= R.x0 && r.x <= R.x1).reverse();
   if (!L.length) return '<p class="muted">Aucune course sur la période.</p>';
@@ -1265,35 +1248,15 @@ function renderIndicateur(app) {
   app.querySelectorAll('.bl').forEach(p => { const t = e => { if (!e.target.closest('a')) p.classList.toggle('open'); }; p.addEventListener('click', t); p.addEventListener('keydown', e => { if (e.key === 'Enter') t(e); }); });
 }
 
-/* ---------- vue Frise : tous les indicateurs sur le même axe de temps ---------- */
-function renderFrise(app) {
-  const R = span(S.range, S.sim), on = M.filter(m => S.rows.has(m.id));
-  app.innerHTML = enteteH() + `
-  <div class="stick">${rangesH()}<p class="cdate" id="c-date">${fmtD(R.x0, true)} – ${fmtD(R.xe, true)}</p></div>
-  <nav class="chips scroll wrapd" aria-label="Lignes affichées">${M.map(x => `<button class="chip${S.rows.has(x.id) ? ' on' : ''}" data-row="${x.id}" style="--mc:${x.col}" aria-pressed="${S.rows.has(x.id)}">${ico(x.ico)}${x.short}</button>`).join('')}</nav>
-  <div class="opts">${togH('races', '🏁', 'Courses')}${togH('sim', '📅', 'Mois suivant')}</div>
-  <p class="muted hint">Touche ou survole un graphique : la même date est lue sur toutes les lignes.</p>${simH(R)}
-  ${on.length ? `<section class="rows">${on.map(m => { const k = m.head(R, stOf(m.id)); return `<div class="row"><div class="rh"><h3>${ico(m.ico)}${m.short}</h3><p class="rv" style="color:${m.col}" data-rv="${m.id}" data-def="${esc(k.val + (k.unit ? ' ' + k.unit : ''))}">${k.val}${k.unit ? ' ' + k.unit : ''}</p>${viewsH(m, 'sm')}</div><div class="rc" data-chart="${m.id}"></div></div>`; }).join('')}</section>` : '<p class="muted">Aucune ligne affichée : active un indicateur ci-dessus.</p>'}
-  <section class="card"><h2>Courses</h2>${racesH(R)}</section>`;
-  const charts = [], cd = app.querySelector('#c-date'), defDate = cd.textContent;
-  const hover = (x, lk) => {
-    charts.forEach(c => { c.ch.show(x, true); const e = app.querySelector(`[data-rv="${c.id}"]`);
-      if (x == null) e.textContent = e.dataset.def; else { const rows = c.ch.at(x), t = rows.find(r => r.tot); e.textContent = t ? t.txt : (rows.filter(r => !r.small).slice(0, 2).map(r => r.txt.split(' · ')[0]).join(' · ') || '–'); } });
-    cd.innerHTML = x == null ? esc(defDate) : esc(fmtDJ(x) + (x > TODAY ? ' · à venir' : '')) + (lk ? ' · ' + (lk.acts ? lk.acts.map(a => `<a class="tl" href="${STRAVA}${a.id}" target="_blank" rel="noopener">${jourC(a.x)} ${esc(a.n)}</a>`).concat(lk.plan.map(p => `<span class="tpl">${jourC(p.x)} ${esc(p.n)}</span>`)).join(' · ') : `<a class="tl" href="${lk.href}" target="_blank" rel="noopener">${esc(lk.n)} ↗</a>`) : '');
-  };
-  app.querySelectorAll('[data-chart]').forEach((e, i) => { const m = MID[e.dataset.chart], sp = specOf(m, R, { mode: modeOf(m), compare: false });
-    charts.push({ id: m.id, ch: draw(e, sp, { h: i === on.length - 1 ? 128 : (i === 0 ? 124 : 104), xAxis: i === on.length - 1, evLabels: i === 0, ticks: 2, onHover: hover, group: 'frise' }) }); });
-}
-
 /* ---------- rendu et interactions ---------- */
 const app = document.getElementById('app');
 function render(fade) {
   const sl = (app.querySelector('.chips.scroll') || {}).scrollLeft || 0;
   app.className = 'v-' + S.ver; app.style.removeProperty('--mc'); HIDERS.clear();
-  ({ frise: renderFrise, records: renderRecords, trails: renderTrails, agenda: renderAgenda }[S.ver] || renderIndicateur)(app);
+  ({ records: renderRecords, trails: renderTrails, agenda: renderAgenda }[S.ver] || renderIndicateur)(app);
   const n = app.querySelector('.chips.scroll'); if (n) n.scrollLeft = sl;
   // après un clic de menu : le contenu apparaît en fondu, les menus restent immobiles
-  if (fade) app.querySelectorAll(':scope > :not(.top):not(.dock):not(.chips):not(.seg):not(.ranges):not(.opts):not(.stick)').forEach(e => e.classList.add('fade'));
+  if (fade) app.querySelectorAll(':scope > :not(.top):not(.dock):not(.chips):not(.seg):not(.ranges):not(.opts)').forEach(e => e.classList.add('fade'));
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
@@ -1306,7 +1269,6 @@ document.addEventListener('click', e => {
   else if (d.mode) S.mode[d.for] = d.mode;
   else if (d.range) S.range = d.range;
   else if (d.tog) S[d.tog] = !S[d.tog];
-  else if (d.row) { S.rows.has(d.row) ? S.rows.delete(d.row) : S.rows.add(d.row); }
   else return;
   save(); render(true);
 });
