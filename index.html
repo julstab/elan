@@ -658,7 +658,16 @@ function draw(host, spec, o = {}) {
     for (const sx of snaps) { const dd = Math.abs(sx - xv); if (dd < bd) { bd = dd; best = sx; } }
     if (best !== lastX) { lastX = best; const lk = link(best); ov.style.cursor = lk && lk.href ? 'pointer' : ''; o.onHover ? o.onHover(best, lk) : show(best); } };
   const hide = () => { lastX = null; o.onHover ? o.onHover(null) : show(null); };
-  ov.addEventListener('pointermove', move); ov.addEventListener('pointerdown', e => { ptype = e.pointerType; move(e); });
+  // tactile (hors Frise) : l'infobulle ne s'ouvre que sur un point ou une barre ; toucher ailleurs la ferme. La souris garde le survol.
+  const hit = e => { const r = svg.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top; let best = null, bd = 1e9;
+    for (const sx of snaps) { const dd = Math.abs(X(norm(sx)) - px); if (dd < bd) { bd = dd; best = sx; } }
+    if (best == null || bd > 18) return null;
+    if (at(best).some(q => q.y != null && Math.abs(q.y - py) <= 22)) return best;
+    if (spec.bars) { const i = spec.bars.xs.indexOf(norm(best) - 3); if (i >= 0 && py >= Y(tots[i]) - 12 && py <= mt + ph) return best; }
+    return null; };
+  ov.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' || o.onHover) move(e); });
+  ov.addEventListener('pointerdown', e => { ptype = e.pointerType; if (ptype === 'mouse' || o.onHover) return move(e);
+    const b = hit(e); if (b == null) hide(); else { lastX = b; show(b); } });
   ov.addEventListener('click', () => { const a = ptype === 'mouse' && link(lastX); if (a && a.href) window.open(a.href, '_blank', 'noopener'); });   // souris : clic direct ; tactile : lien dans l'infobulle
   ov.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
   host._grp = o.group || null; HIDERS.add({ host, hide, group: o.group || null });
