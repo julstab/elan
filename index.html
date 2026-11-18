@@ -277,13 +277,9 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 /* vue Allures : courbe FC ↔ allure, zones et repères */
 .ax { fill: var(--fg2); font-size: 11px; font-variant-numeric: tabular-nums; }
 .alz { font-size: 10px; font-weight: 700; letter-spacing: .04em; }
-.alc { fill: none; stroke: var(--fg); stroke-width: 2; stroke-linejoin: round; }
-.alsv { stroke: var(--fg3); stroke-width: 1; stroke-dasharray: 4 4; } .alfm { stroke: #FF6B6B; stroke-width: 1; stroke-dasharray: 2 3; opacity: .7; }
-.alsvt { fill: var(--fg2); font-size: 10px; font-weight: 700; letter-spacing: .06em; }
-.allb { fill: var(--fg); font-size: 11px; font-weight: 700; paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; }
 .alrg { stroke-width: 4; stroke-linecap: round; opacity: .55; }
 .alp { cursor: pointer; } .alp.on .dot { r: 7; stroke-width: 3; }
-.altip span { display: block; color: var(--fg2); white-space: nowrap; }
+.algrid { display: grid; gap: 14px; } @media (min-width: 760px) { .algrid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }   /* PC : échelle à gauche, zones à droite */
 .allg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--fg2); margin: 0; }
 .allg i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid; margin-right: 6px; vertical-align: -1px; }
 .alrs, .alzs { display: flex; flex-direction: column; }
@@ -1071,36 +1067,7 @@ const repS = r => Array.isArray(r[1]) ? (r[1][0] + r[1][1]) / 2 : r[1];
 const repA = r => Array.isArray(r[1]) ? `${fmtS(r[1][0])}-${fmtS(r[1][1])}` : fmtS(r[1]);
 const zoneOf = fc => { let z = AL.zones[0]; for (const q of AL.zones) if (fc >= q[2]) z = q; return z; };
 
-function alChart(host) {
-  const W = Math.max(host.clientWidth, 280), H = PCH(330, 400), ml = 34, mr = 10, mt = 22, mb = 26, pw = W - ml - mr, ph = H - mt - mb;
-  const v0 = 9.2, v1 = 19.2, f0 = 95, f1 = 163, X = v => ml + (v - v0) / (v1 - v0) * pw, Y = f => mt + (f1 - f) / (f1 - f0) * ph;
-  const zb = AL.zones.map((z, i) => { const lo = Math.max(z[2], f0), hi = i < AL.zones.length - 1 ? AL.zones[i + 1][2] : f1;
-    return `<rect x="${ml}" y="${Y(hi)}" width="${pw}" height="${Y(lo) - Y(hi)}" fill="${z[3]}" opacity=".10"/><text class="alz" x="${i < 4 ? ml + pw - 6 : ml + 6}" y="${Y(hi) + 13}" text-anchor="${i < 4 ? 'end' : 'start'}" fill="${z[3]}">${z[0]} · ${z[4]}</text>`; }).join('');
-  const yt = [100, 110, 120, 130, 140, 150, 160].map(f => `<line class="gl" x1="${ml}" x2="${ml + pw}" y1="${Y(f)}" y2="${Y(f)}"/><text class="ax" x="${ml - 6}" y="${Y(f) + 4}" text-anchor="end">${f}</text>`).join('');
-  const xt = (W < 500 ? [360, 300, 270, 240, 210] : [360, 330, 300, 270, 240, 210, 180]).map(s => `<text class="ax" x="${X(kmh(s))}" y="${H - 7}" text-anchor="middle">${fmtS(s)}</text>`).join('');
-  let d = ''; for (let v = v0; v <= v1 + 1e-9; v += .1) d += (d ? 'L' : 'M') + X(v).toFixed(1) + ',' + Y(Math.min(AL_F(v), f1)).toFixed(1);
-  const sv = [['SV1', 282.5], ['SV2', 226]].map(([l, s]) => `<line class="alsv" x1="${X(kmh(s))}" x2="${X(kmh(s))}" y1="${mt}" y2="${mt + ph}"/><text class="alsvt" x="${X(kmh(s))}" y="${mt - 8}" text-anchor="middle">${l}</text>`).join('');
-  // FC max : ligne fine en haut
-  const fm = `<line class="alfm" x1="${ml}" x2="${ml + pw}" y1="${Y(AL.fcmax)}" y2="${Y(AL.fcmax)}"/>`;
-  let up = true;
-  const pts = AL.rep.map((r, i) => { const s = repS(r), v = kmh(s), f = AL_F(v), x = X(v), y = Y(f), lab = r[5];
-    let t = ''; if (lab) { const a = up; up = !up; t = `<text class="allb" x="${x + (a ? -6 : 6)}" y="${y + (a ? -9 : 17)}" text-anchor="${a ? 'end' : 'start'}">${lab}</text>`; }
-    const rg = Array.isArray(r[1]) ? `<line class="alrg" x1="${X(kmh(r[1][1]))}" x2="${X(kmh(r[1][0]))}" y1="${y}" y2="${y}" stroke="${SRC_COL[r[3]]}"/>` : '';
-    return `<g class="alp" data-i="${i}">${rg}<circle cx="${x}" cy="${y}" r="16" fill="transparent"/><circle class="dot" cx="${x}" cy="${y}" r="4.5" stroke="${SRC_COL[r[3]]}"/>${t}</g>`; }).join('');
-  host.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="Courbe de la FC selon l’allure, avec les zones et les repères"><text class="ax" x="${ml - 6}" y="${mt - 8}" text-anchor="end">bpm</text>${zb}${yt}${xt}${sv}${fm}<path class="alc" d="${d}"/>${pts}</svg><div class="tip altip" hidden></div>`;
-  const tip = host.querySelector('.altip'), svg = host.querySelector('svg');
-  const show = g => { const r = AL.rep[+g.dataset.i], s = repS(r), c = g.querySelector('.dot'), cx = +c.getAttribute('cx'), cy = +c.getAttribute('cy');
-    tip.innerHTML = `<b>${esc(r[0])}</b><span>${repA(r)} /km · ${nf(kmh(s), 1)} km/h · ${nf(kmh(s) / AL.vma * 100)} % VMA</span><span>FC ${r[2] || '≈ ' + nf(AL_F(kmh(s)))} · ${r[3]}</span>`;
-    tip.hidden = false; const tw = tip.offsetWidth; tip.style.left = Math.max(0, Math.min(W - tw, cx - tw / 2)) + 'px'; tip.style.top = Math.max(0, cy - tip.offsetHeight - 14) + 'px';
-    svg.querySelectorAll('.alp.on').forEach(e => e.classList.remove('on')); g.classList.add('on'); };
-  const hide = () => { tip.hidden = true; svg.querySelectorAll('.alp.on').forEach(e => e.classList.remove('on')); };
-  svg.addEventListener('pointerover', e => { const g = e.target.closest('.alp'); if (e.pointerType === 'mouse') g ? show(g) : hide(); });
-  svg.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
-  svg.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; const g = e.target.closest('.alp'); g ? show(g) : hide(); });
-  return { show: i => show(svg.querySelector(`.alp[data-i="${i}"]`)) };
-}
-
-// téléphone : échelle verticale des allures (rapide en haut), zones en couleur sur la barre ; les repères sont espacés régulièrement
+// échelle verticale des allures (rapide en haut), zones en couleur sur la barre ; les repères sont espacés régulièrement
 // à droite et reliés par un trait à leur vraie place sur l'échelle : plus aucun chevauchement
 function alLadder(host) {
   const W = Math.max(host.clientWidth, 280), L = AL.rep.map((r, i) => ({ r, i, v: kmh(repS(r)) })).sort((a, b) => b.v - a.v);
@@ -1121,11 +1088,10 @@ function alLadder(host) {
 }
 
 function renderAllures(app) {
-  const tel = window.innerWidth < 760;
   const sv1 = AL.rep.find(r => r[0].includes('SV1')), lt = AL.rep.find(r => r[0].includes('SV2'));
   const tiles = [['🚀', 'VMA', nf(AL.vma, 1) + ' km/h', fmtS(3600 / AL.vma) + ' /km'], ['🔴', 'Seuil lactique', fmtS(lt[1]) + ' /km', 'FC ' + lt[2]],
     ['🟢', 'Seuil aérobie', repA(sv1) + ' /km', 'FC ' + sv1[2]], ['❤️', 'FC max · repos', AL.fcmax + ' · ' + AL.fcr, 'bpm']];
-  // allures de chaque zone FC, lues sur la courbe
+  // allures de chaque zone FC, d'après la relation FC ↔ allure
   const zr = AL.zones.map((z, i) => { const lo = z[2], hi = i < AL.zones.length - 1 ? AL.zones[i + 1][2] - 1 : AL.fcmax;
     const pl = 3600 / AL_V(lo), pr = 3600 / AL_V(hi + (i < AL.zones.length - 1 ? 1 : 0));
     return { z, fc: i < AL.zones.length - 1 ? `${lo}-${hi}` : `≥ ${lo}`, al: i === 0 ? `> ${fmtS(pr)}` : i === AL.zones.length - 1 ? `< ${fmtS(pl)}` : `${fmtS(pl)} → ${fmtS(pr)}` }; });
@@ -1134,15 +1100,15 @@ function renderAllures(app) {
       <span class="alv"><b>${repA(r)}</b><small>${nf(kmh(s), 1)} km/h · ${nf(kmh(s) / AL.vma * 100)} %</small></span><span class="alf"><b>${r[2] || '≈ ' + nf(AL_F(kmh(s)))}</b><small class="als" style="color:${SRC_COL[r[3]]}">${r[3]}</small></span><span class="ald">${esc(r[4])}</span></button>`; }).join('');
   app.innerHTML = enteteH() + chipsH() + `
   <div class="tk alt">${tiles.map(([e, l, v, s]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b><span class="rk">${s}</span></div>`).join('')}</div>
-  <section class="card"><h2>${tel ? '🎚️ Échelle des allures' : '📈 FC selon l’allure'}</h2><div id="al-chart" class="chart"></div>
+  <div class="algrid"><section class="card"><h2>🎚️ Échelle des allures</h2><div id="al-chart" class="chart"></div>
     <p class="allg">${Object.entries(SRC_COL).map(([k, c]) => `<span><i style="border-color:${c}"></i>${k === 'Course' ? 'Chrono de course' : k === 'Calcul' ? 'Mon calcul' : k === 'Campus' ? 'Campus Coach' : k}</span>`).join('')}</p>
-    <p class="note">${tel ? 'Du plus rapide (en haut) au plus lent. La barre colorée donne tes zones FC (1 à 5) ; chaque repère est relié à sa place sur l’échelle.' : 'Plus on va à droite, plus c’est rapide. La courbe relie tes sorties et courses de 2026 en effort continu ; touche un point pour lire le repère.'}</p></section>
+    <p class="note">Du plus rapide (en haut) au plus lent. La barre colorée donne tes zones FC (1 à 5) ; chaque repère est relié à sa place sur l’échelle.</p></section>
   <section class="card"><h2>🎚️ Zones</h2><div class="alzs">${zr.map(q => `<div class="alzr" style="--zc:${q.z[3]}"><span class="alzt">${q.z[0]}</span><span class="aln"><b>${q.z[1]}</b></span><span class="alv"><b>${q.al}</b><small>/km</small></span><span class="alf"><b>${q.fc}</b><small>bpm</small></span></div>`).join('')}</div>
-    <p class="note">Zones FC de ta montre (% de la FC max 160) ; les allures sont lues sur la courbe, sur le plat et par temps frais.</p></section>
+    <p class="note">Zones FC de ta montre (% de la FC max 160) ; allures déduites de ta FC en effort continu sur tes sorties et courses de 2026, sur le plat et par temps frais.</p></section></div>
   <section class="card"><h2>📍 Repères</h2><div class="alrs">${rows}</div>
     <p class="note">Allure /km, vitesse, % de VMA, FC. Repères au ${fmtD(dn(AL.maj), true)} : Campus Coach recalcule ses allures au fil des séances.</p></section>`;
   app.style.setProperty('--mc', '#FF6B6B');
-  const ch = (tel ? alLadder : alChart)(app.querySelector('#al-chart'));
+  const ch = alLadder(app.querySelector('#al-chart'));
   app.querySelectorAll('[data-al]').forEach(b => b.addEventListener('click', () => { ch.show(+b.dataset.al); app.querySelector('#al-chart').scrollIntoView({ behavior: 'smooth', block: 'center' }); }));
 }
 
