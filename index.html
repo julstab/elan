@@ -313,6 +313,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .tavl { fill: var(--fg2); font-size: 10px; font-weight: 600; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
 .tanl { fill: var(--fg2); font-size: 10.5px; font-weight: 700; text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
 .tanl.bst { fill: var(--fg); }
+@media (max-width: 759px) { .tk.alt .nomob { display: none; } }   /* seuils lactique/aérobie : PC seulement (déjà dans l'échelle) */
 
 </style>
 </head>
@@ -1182,7 +1183,7 @@ function renderAllures(app) {
     return `<button class="alr" data-al="${i}"><span class="alzt" style="--zc:${z[3]}">${z[0]}</span><span class="aln"><b>${esc(r[0])}</b></span>
       <span class="alv"><b>${repA(r)}</b><small>${nf(kmh(s), 1)} km/h · ${nf(kmh(s) / AL.vma * 100)} %</small></span><span class="alf"><b>${r[2] || '≈ ' + nf(AL_F(kmh(s)))}</b><small class="als" style="color:${SRC_COL[r[3]]}">${r[3]}</small></span><span class="ald">${esc(r[4])}</span></button>`; }).join('');
   app.innerHTML = enteteH() + chipsH() + `
-  <div class="tk alt">${tiles.map(([e, l, v, s]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b><span class="rk">${s}</span></div>`).join('')}</div>
+  <div class="tk alt">${tiles.map(([e, l, v, s], i) => `<div class="tki${i === 1 || i === 2 ? ' nomob' : ''}"><span class="rl">${ico(e)}${l}</span><b>${v}</b><span class="rk">${s}</span></div>`).join('')}</div>
   <div class="algrid"><section class="card"><h2>🎚️ Échelle des allures</h2><div id="al-chart" class="chart"></div>
     <p class="allg">${Object.entries(SRC_COL).map(([k, c]) => `<span><i style="border-color:${c}"></i>${k === 'Course' ? 'Chrono de course' : k === 'Calcul' ? 'Mon calcul' : k === 'Campus' ? 'Campus Coach' : k}</span>`).join('')}</p>
     <p class="note">Du plus rapide (en haut) au plus lent. La barre colorée donne tes zones FC (1 à 5) ; chaque repère est relié à sa place sur l’échelle.</p></section>
