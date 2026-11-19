@@ -115,7 +115,7 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .bl.open { display: block; -webkit-line-clamp: unset; } .bl b { color: var(--fg); font-weight: 700; } .bl b a { color: var(--fg); text-decoration: none; } .bl .bd { color: var(--fg2); font-weight: 500; }
 .bl .bx { color: var(--fg3, var(--fg2)); }
 .bl + .bl { border-top: 1px solid var(--line); padding-top: 6px; }
-.bl.bs { background: color-mix(in srgb, var(--mc, #FC5200) 12%, transparent); margin: 0 -6px; padding: 5px 8px; border-radius: 8px; } .bl.bs + .bl { border-top: 0; }   /* dernière séance (et son analyse) sur fond teinté, distincte de la ligne Semaine */
+.bl.bs { background: color-mix(in srgb, var(--fg) 7%, transparent); margin: 0 -6px; padding: 5px 8px; border-radius: 8px; } .bl.bs + .bl { border-top: 0; }   /* dernière séance (et son analyse) sur fond teinté, distincte de la ligne Semaine */
 /* fenêtre d'analyse complète d'une séance, ouverte au clic sur la ligne « Dernière séance » */
 #an-dlg { width: min(680px, calc(100vw - 24px)); max-height: 86vh; max-height: 86dvh; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--fg2); }
 #an-dlg::backdrop { background: rgba(0, 0, 0, .65); }
