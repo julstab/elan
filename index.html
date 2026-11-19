@@ -790,11 +790,40 @@ function drawRec(box, d) {
   HIDERS.add({ host: box, hide });
 }
 
+/* vitesse critique (modèle distance = VC × temps + D′) : test 1500 m + RP 5 km et 10 km ; le semi sert de témoin hors modèle */
+const T1500 = { date: '2026-03-27', t: 304 };
+const vcrit = () => {
+  const c5 = RR.find(r => r.d === '5' && r.cur), c10 = RR.find(r => r.d === '10' && r.cur), c21 = RR.find(r => r.d === '21' && r.cur);
+  const P = [{ l: '1 500 m', m: 1500, t: T1500.t, date: T1500.date, test: 1 }, { l: '5 km', m: 5000, t: c5.t, date: c5.date }, { l: '10 km', m: 10000, t: c10.t, date: c10.date }];
+  const mt = P.reduce((a, p) => a + p.t, 0) / P.length, mm = P.reduce((a, p) => a + p.m, 0) / P.length;
+  const cs = P.reduce((a, p) => a + (p.t - mt) * (p.m - mm), 0) / P.reduce((a, p) => a + (p.t - mt) ** 2, 0), dp = mm - cs * mt;
+  return { cs, dp, P, semi: { l: 'Semi', m: 21097.5, t: c21.t, date: c21.date } };
+};
+function drawCS(box, V, C) {
+  box.innerHTML = ''; box.classList.add('chart');
+  const W = Math.max(box.clientWidth, 260), H = PCH(200, 250), ml = 8, mr = 50, mt = 18, mb = 24, pw = W - ml - mr, ph = H - mt - mb;
+  const kmh = p => p.m / p.t * 3.6, t0 = Math.log(240), t1 = Math.log(6000), all = V.P.concat(V.semi);
+  const lo = Math.floor(Math.min(...all.map(kmh)) - .6), hi = Math.ceil(Math.max(...all.map(kmh), (V.cs + V.dp / 240) * 3.6) + .3);
+  const X = t => ml + (Math.log(t) - t0) / (t1 - t0) * pw, Y = v => mt + (hi - v) / (hi - lo) * ph, f = n => n.toFixed(1);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Vitesse selon la durée et vitesse critique">`;
+  for (let v = lo; v <= hi; v++) s += `<line class="gl" x1="${ml}" x2="${W - mr}" y1="${f(Y(v))}" y2="${f(Y(v))}"/><text class="ytick" x="${W - mr + 8}" y="${f(Y(v) + 4)}">${v} km/h</text>`;
+  [[300, '5′'], [600, '10′'], [1800, '30′'], [3600, '1h']].forEach(([t, l]) => { s += `<text class="xtick" x="${f(X(t))}" y="${H - 6}">${l}</text>`; });
+  const cv = []; for (let lt = t0; lt <= t1 + 1e-9; lt += (t1 - t0) / 80) { const t = Math.exp(lt); cv.push(f(X(t)) + ',' + f(Y((V.cs + V.dp / t) * 3.6))); }
+  s += `<polyline fill="none" stroke="${C}" stroke-width="2" stroke-linecap="round" points="${cv.join(' ')}"/>`;
+  s += `<line x1="${ml}" x2="${W - mr}" y1="${f(Y(V.cs * 3.6))}" y2="${f(Y(V.cs * 3.6))}" stroke="${C}" stroke-width="1.5" stroke-dasharray="5 5" opacity=".7"/><text class="rpl" x="${ml + 2}" y="${f(Y(V.cs * 3.6) + 15)}">VC ${(V.cs * 3.6).toFixed(1).replace('.', ',')} km/h</text>`;
+  all.forEach(p => {
+    const cx = X(p.t), cy = Y(kmh(p)), out = p === V.semi, rt = cx > W - mr - 70;
+    s += `<g><title>${p.l}${p.test ? ' (test)' : ''} · ${fT(p.t)} · ${fT(p.t / p.m * 1000)}/km</title><circle r="5" cx="${f(cx)}" cy="${f(cy)}" ${out ? `fill="var(--bg)" stroke="${C}"` : `fill="${C}" stroke="var(--bg)"`} stroke-width="2"/></g>`;
+    s += `<text class="ytick" x="${f(rt ? cx - 9 : cx + 9)}" y="${f(out ? cy + 18 : cy - 8)}" text-anchor="${rt ? 'end' : 'start'}">${p.l} · ${fT(p.t / p.m * 1000)}</text>`;
+  });
+  box.insertAdjacentHTML('beforeend', s + '</svg>');
+}
 function renderRecords(app) {
   const d = RDIST[S.rec] ? S.rec : '21', cfg = RDIST[d], C = cfg.c, K = REC.K[d], L = RR.filter(r => r.d === d), cur = L.find(r => r.cur), byT = [...L].sort((a, b) => a.t - b.t);
   const first = L.filter(r => !r.watch)[0], ts = L.map(r => r.t);
   const prog = first && first !== cur && first.t - cur.t >= 10 ? `▼ <b>${fT(first.t - cur.t)}</b> depuis ${first.date.slice(0, 4)}` : `<b>± ${Math.max(...ts) - Math.min(...ts)} s</b> sur ${L.length} courses`;
   const chips = [prog, cur.sc ? `Scratch <b>${ord(cur.sc[0])}</b> / ${nf(cur.sc[1])}` : '', cur.cat ? `${cur.cat.c} <b>${ord(cur.cat.r)}</b>${cur.cat.n ? ' / ' + cur.cat.n : ''}${MEDAL[cur.cat.r] || ''}` : '', `<b>${fT(cur.t / cur.km)}</b>/km`, cur.pending ? 'Classement à venir' : ''].filter(Boolean);
+  const V = vcrit();
   const tgt = d === '21' ? REC.cannes : REC.nov27, p = K ? rproj(yrOf(tgt), d) : null, tg = tgt.split('-').map(Number);
   app.innerHTML = enteteH() + `
   <p class="muted">Chronos officiels sur route : ${RR.length} courses, ${RR.filter(r => r.rp).length} records établis depuis ${RX0}.</p>
@@ -804,10 +833,15 @@ function renderRecords(app) {
   <div class="legend"><span><i class="pt hl" style="--c:${C}"></i>RP actuel</span><span><i class="pt" style="--c:${C}"></i>Ancien RP</span><span><i class="op" style="--c:${C}"></i>Course sans record</span>${K ? `<span><i class="dash" style="--c:${C}"></i>Projection</span><span><i style="background:${C};opacity:.3"></i>Fourchette</span>` : ''}<span>↑ plus rapide</span></div>
   ${p ? `<section class="card"><h2>${d === '21' ? '🌴 Semi de Cannes' : '📈 Projection'} · ${MOIS[tg[1] - 1]} ${tg[0]}</h2><p class="pj"><b>${fT(p.med)}</b><span class="muted">fourchette ${fT(p.lo)} – ${fT(p.hi)}</span></p>
     <details class="how"><summary>Comment la projection est calculée</summary><ul><li>Courbe à rendements décroissants ajustée sur les quatre 10 km officiels (Illkirch 2025 corrigé de son parcours sinueux).</li><li>5 km et semi déduits du 10 km par la formule de Riegel et les rapports entre distances mesurés en 2025-2026.</li><li>Pas de baisse liée à l’âge : tu progresses encore (course à pied depuis 2020), la projection reste stable. Fourchette : de « tout s’aligne » à « année tournée vers le trail ».</li><li>Projection statistique, pas un objectif.</li></ul></details></section>` : ''}
+  <section class="card"><h2>⚡ Vitesse critique</h2><p class="pj"><b>${(V.cs * 3.6).toFixed(1).replace('.', ',')} km/h</b><span class="muted">${fT(1000 / V.cs)}/km · réserve D′ ≈ ${Math.round(V.dp / 10) * 10} m</span></p>
+    <div id="r-cs"></div>
+    <div class="legend"><span><i class="pt hl" style="--c:${C}"></i>Chrono du modèle</span><span><i class="op" style="--c:${C}"></i>Semi (témoin) : ${Math.round(V.semi.m / V.semi.t / V.cs * 100)} % de la VC</span></div>
+    <details class="how"><summary>Ce que ça veut dire</summary><ul><li>Vitesse que tu peux tenir longtemps sans t’effondrer (≈ 30-40 min) : la frontière entre l’effort « stable » et l’effort qui épuise.</li><li>Au-dessus, tu puises dans une réserve finie, D′ ≈ ${Math.round(V.dp / 10) * 10} m : c’est ce qui paie un finish ou une relance.</li><li>Calculée sur ton test 1 500 m (${fmtD(dn(T1500.date), true)}) et tes RP 5 km et 10 km : la courbe se met à jour seule à chaque nouveau record.</li></ul></details></section>
   <section class="card"><h2>⏱️ Tous les chronos – ${cfg.s}</h2><div class="races">${byT.map((r, i) => `<div class="rrow${r.cur ? ' cur' : ''}"><span class="rd">${i + 1}</span><div><p class="rt"><b>${fT(r.t)}</b>${r.cur ? '<span class="rb now">🏆 RP actuel</span>' : r.rp ? '<span class="rb">Ancien RP</span>' : ''}${r.watch ? '<span class="rb">montre</span>' : ''}</p><p class="rn">${r.e ? r.e + ' ' : ''}${r.id ? `<a href="${STRAVA}${r.id}" target="_blank" rel="noopener">${esc(r.name)} ↗</a>` : esc(r.name)}</p><p class="rk">${esc([r.place, fmtD(r.x, true), ageAt(r.date) + ' ans', r.detail].filter(Boolean).join(' · '))}</p></div><div class="rr"><span>${fSc(r) || (r.pending ? 'à venir' : '')}</span><span>${fCat(r)}</span></div></div>`).join('')}</div></section>
   <p class="muted simn">Semi d’Illkirch 2023 en temps montre · chronos à jour au ${fmtD(dn(REC.today), true)}.</p>`;
   app.style.setProperty('--mc', C);
   drawRec(app.querySelector('#r-chart'), d);
+  drawCS(app.querySelector('#r-cs'), V, C);
 }
 
 /* ---------- vue Trails : tous les trails terminés (classements Betrail, liens Strava), éditions comparées ---------- */
