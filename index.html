@@ -277,10 +277,12 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
   h1 { font-size: 32px; } .ctot b { font-size: 26px; }
   .sbr { grid-template-columns: 210px minmax(0, 1fr) 64px; grid-template-areas: "n b v"; } .sbr b { text-align: right; }   /* barres des chaussures : nom | barre | km */
 }
-@media (min-width: 1120px) {   /* boutons de l'Indicateur : 2 lignes pleine largeur, colonnes égales */
-  .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
-  .chips.ind .chip { justify-content: center; min-width: 0; padding-inline: 6px; }
+@media (min-width: 760px) {   /* boutons des Indicateurs sur PC : une seule ligne pleine largeur, colonnes égales */
+  .chips.ind { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+  .chips.ind .chip { justify-content: center; min-width: 0; padding-inline: 4px; }
+  .chips.ind .chip span { overflow: hidden; text-overflow: ellipsis; }
 }
+@media (min-width: 760px) and (max-width: 959px) { .chips.ind { gap: 4px; } .chips.ind .chip { font-size: 11.5px; padding-inline: 2px; } .chips.ind .chip .e { margin-right: 3px; } }
 @media (max-width: 759px) {   /* menu de l'Indicateur : grille 5 × 2 d'icônes, tout visible, plus de défilement */
   .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 5px; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
   .chips.ind .chip { flex-direction: column; justify-content: center; gap: 1px; min-width: 0; padding: 4px 1px 3px; border-radius: 10px; line-height: 1.25; font-size: 10.5px; letter-spacing: -.01em; }
@@ -1434,7 +1436,7 @@ function renderAllures(app) {
 }
 
 /* ---------- état ---------- */
-const VUES = [['indicateur', 'Indicateur', '🎯'], ['records', 'Records', '🏆'], ['trails', 'Trails', '⛰️'], ['agenda', 'À venir', '🎽']];
+const VUES = [['indicateur', 'Indicateurs', '🎯'], ['records', 'Records', '🏆'], ['trails', 'Trails', '⛰️'], ['agenda', 'À venir', '🎽']];
 const S = { ver: 'indicateur', range: '3m', races: true, compare: false, sim: false, m: 'run', rec: '21', tv: 'km', view: {}, mode: {} };
 try { const p = JSON.parse(localStorage.getItem('tableau-forme') || '{}'); if (p.range) S.range = p.range; if (p.ver) S.ver = p.ver; if (p.m && (MID[p.m] && !['heures', 'vo2'].includes(p.m) || p.m === 'chaussures' || p.m === 'allures')) S.m = p.m; if (p.sim) S.sim = true; if (p.rec) S.rec = p.rec; } catch (e) {}
 const hv = (location.hash || '').replace('#', ''); if (VUES.some(v => v[0] === hv)) S.ver = hv;
@@ -1493,7 +1495,7 @@ const enteteH = () => `
 // menu des indicateurs : entraînement sur la 1re ligne, forme et repères sur la 2e (grille 5 × 2 d'icônes sur téléphone)
 const CHIPS = ['run', 'velo', 'renfo', 'charge', 'allures', 'sommeil', 'vfc', 'chaussures'];   // pages Heures et VO2max retirées le 19/11/2026 (VO2max : bloc en tête de la page Allures)
 const XTRA = { allures: ['🎚️', 'Allures'], chaussures: ['👟', 'Chaussures'] };
-const chipsH = () => `<nav class="chips scroll wrapd ind" style="--cols:${Math.ceil(CHIPS.length / 2)}" aria-label="Indicateur">${CHIPS.map(id => { const [e, l] = XTRA[id] || [MID[id].ico, MID[id].short];
+const chipsH = () => `<nav class="chips scroll wrapd ind" style="--cols:${Math.ceil(CHIPS.length / 2)};--n:${CHIPS.length}" aria-label="Indicateurs">${CHIPS.map(id => { const [e, l] = XTRA[id] || [MID[id].ico, MID[id].short];
   return `<button class="chip${id === S.m ? ' on' : ''}" data-m="${id}">${ico(e)}<span>${l}</span></button>`; }).join('')}</nav>`;
 function renderIndicateur(app) {
   if (S.m === 'chaussures') return renderShoes(app);
