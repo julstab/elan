@@ -1068,7 +1068,7 @@ function semaineH() {
     : next.length ? `semaine prochaine sur Nolio : ${next.length} séances${nk ? ', ' + nf(nk) + ' km de course' : ''}` : '';
   return bline('📅', `Semaine <span class="bd">${fmtD(CUR)} – ${fmtD(CUR + 6)}</span>`, f.join(' · '), esc(NOTES.weeks[isoOf(CUR)] || auto), x.join(' · '));
 }
-const briefH = m => `<section class="brief2">${seanceH(m)}${MNOTE[(MESURE[m.id] || [])[0]] ? '' : semaineH()}</section>`;   // sommeil, VFC : la nuit seule
+const briefH = m => `<section class="brief2">${seanceH(m)}${m.id === 'run' ? semaineH() : ''}</section>`;   // bloc Semaine sur la page Course seulement
 
 /* ---------- vue À venir : prochains dossards (courses_a_venir.json + courses saisies sur Nolio) ---------- */
 const ASTAT = {
