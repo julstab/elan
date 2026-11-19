@@ -850,7 +850,7 @@ const paceH = PS => { const y = PS.filter(p => !p.dash), cur = y[y.length - 1], 
     <div class="legend">${PS.map(p => `<span><i ${p.dash ? `class="dash" style="--c:${p.c}"` : `style="background:${p.c}"`}></i>${p.l}</span>`).join('')}<span>↑ plus rapide</span></div>
     <details class="how"><summary>Ce que ça veut dire</summary><ul><li>Pour chaque durée, la meilleure vitesse moyenne que tu as tenue sur la période, à l’entraînement comme en course (sorties sur route, hors descentes et parcours vallonnés).</li><li>Plus la courbe est plate, plus tu tiens ton allure quand l’effort s’allonge : un profil endurant perd peu de vitesse, un profil rapide en perd davantage.</li>${o[600] && o[3600] ? `<li>En ${cur.l} : ${fT(1000 / o[600][0])}/km sur 10 min, ${fT(1000 / o[3600][0])}/km sur 1 h.</li>` : ''}<li>Les arrêts comptent dans la durée : une pause casse l’effort, comme en course.</li></ul></details></section>`; };
 /* records courts mesurés au GPS de la montre (fetch_sprint.py), sous les 5 / 10 / semi */
-const SPR = [['100', '100 m', '⚡'], ['400', '400 m', '🏟️'], ['1000', '1 000 m', '🔥']];
+const SPR = [['100', '100 m', '💨'], ['400', '400 m', '🏟️'], ['1000', '1 000 m', '🔥']];
 const fTd = s => { const m = Math.floor(s / 60), r = (s - 60 * m).toFixed(1).replace('.', '″'); return m ? `${m}′${r.padStart(4, '0')}` : r; };   // dixièmes : 15″1, 1′07″8
 const sprH = ([k, l, e]) => { const r = (D.sprint || {})[k]; return r ? `<a class="rtile" href="${STRAVA}${r[3]}" target="_blank" rel="noopener" title="${esc(r[2])}"><span class="rl">${ico(e)}${l}</span><b>${k === '1000' ? fT(Math.round(r[0])) : fTd(r[0])}</b><span class="rs">${fmtD(dn(r[1]), true)}</span></a>` : ''; };
 function renderRecords(app) {
