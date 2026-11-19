@@ -115,6 +115,7 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .bl.open { display: block; -webkit-line-clamp: unset; } .bl b { color: var(--fg); font-weight: 700; } .bl b a { color: var(--fg); text-decoration: none; } .bl .bd { color: var(--fg2); font-weight: 500; }
 .bl .bx { color: var(--fg3, var(--fg2)); }
 .bl + .bl { border-top: 1px solid var(--line); padding-top: 6px; }
+.bl.bs { background: color-mix(in srgb, var(--mc, #FC5200) 12%, transparent); margin: 0 -6px; padding: 5px 8px; border-radius: 8px; } .bl.bs + .bl { border-top: 0; }   /* dernière séance (et son analyse) sur fond teinté, distincte de la ligne Semaine */
 /* fenêtre d'analyse complète d'une séance, ouverte au clic sur la ligne « Dernière séance » */
 #an-dlg { width: min(680px, calc(100vw - 24px)); max-height: 86vh; max-height: 86dvh; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--fg2); }
 #an-dlg::backdrop { background: rgba(0, 0, 0, .65); }
@@ -1086,15 +1087,14 @@ function actAuto(a) {
   return b.join(', ');
 }
 // replié sur trois lignes : titre, chiffres clés, commentaire ; le reste (extra) se lit en touchant la ligne
-const bline = (ico_, title, facts, cmt, extra, an) => `<p class="bl"${an ? ` data-an="${an}"` : ''} role="button" tabindex="0" title="${an ? "Toucher pour lire l'analyse" : 'Toucher pour tout lire'}">${ico(ico_)}<b>${title}</b>${facts ? ' · ' + facts : ''}${cmt ? ' — ' + cmt : ''}${extra ? ` <span class="bx">(${extra})</span>` : ''}</p>`;
+const bline = (ico_, title, facts, cmt, extra, an, cls) => `<p class="bl${cls ? ' ' + cls : ''}"${an ? ` data-an="${an}"` : ''} role="button" tabindex="0" title="${an ? "Toucher pour lire l'analyse" : 'Toucher pour tout lire'}">${ico(ico_)}<b>${title}</b>${facts ? ' · ' + facts : ''}${cmt ? ' — ' + cmt : ''}${extra ? ` <span class="bx">(${extra})</span>` : ''}</p>`;
 
 function seanceH(m) {
   if (MESURE[m.id]) return mesureH(m);
   const a = [...D.acts].reverse().find(SEANCE[m.id] || SEANCE.heures); if (!a) return '';
-  const nm = a.id ? `<a href="${STRAVA}${a.id}" target="_blank" rel="noopener">${esc(a.n)}</a>` : esc(a.n);
-  const t = `${nm} <span class="bd">${fmtDJ(a.x).replace(/ \d{4}$/, '')}</span>`, note = NOTES.acts[a.id];
+  const t = `${esc(a.n)} <span class="bd">${fmtDJ(a.x).replace(/ \d{4}$/, '')}</span>`, note = NOTES.acts[a.id];
   const an = AN[a.id] ? a.id : '';
-  return note ? bline(m.ico, t, '', esc(note), esc(actFacts(a)), an) : bline(m.ico, t, esc(actFacts(a)), esc(actAuto(a)), '', an);   // analyse écrite d'abord, chiffres ensuite
+  return note ? bline(m.ico, t, '', esc(note), esc(actFacts(a)), an, 'bs') : bline(m.ico, t, esc(actFacts(a)), esc(actAuto(a)), '', an, 'bs');   // analyse écrite d'abord, chiffres ensuite
 }
 // analyse complète d'une séance (analyses/<id Strava>.md, embarquée au build) : s'ouvre dans une fenêtre au clic sur la ligne.
 // Mise en forme reconnue : titres #, listes à tirets, **gras** ; le titre de tête du fichier est remplacé par celui de la séance.
