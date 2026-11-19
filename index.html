@@ -1124,7 +1124,8 @@ function mesureH(m) {
   if (k === 'sl' && d.slh) facts += ' · ' + fmtH(d.slh);
   if (k === 'hrv' && d.hlo) cmt += ` · zone habituelle ${d.hlo}-${d.hhi} : ${d.hrv < d.hlo ? 'en dessous' : d.hrv > d.hhi ? 'au-dessus' : 'dedans'}`;
   const note = MNOTE[k] && NOTES[MNOTE[k]][isoOf(d.x)], t = `${l} <span class="bd">${fmtD(d.x)}</span>`;
-  return note ? bline(m.ico, t, '', esc(note), [facts, cmt].filter(Boolean).join(' · ')) : bline(m.ico, t, facts, cmt);   // analyse écrite d'abord, chiffres ensuite
+  const cls = MNOTE[k] ? 'bs' : '';   // sommeil et VFC : même fond teinté que la dernière séance
+  return note ? bline(m.ico, t, '', esc(note), [facts, cmt].filter(Boolean).join(' · '), '', cls) : bline(m.ico, t, facts, cmt, '', '', cls);   // analyse écrite d'abord, chiffres ensuite
 }
 function semaineH() {
   const W = D.acts.filter(a => a.x >= CUR && a.x <= CUR + 6), run = W.filter(a => RUNS.includes(a.t)), bike = W.filter(a => BIKES.includes(a.t));
