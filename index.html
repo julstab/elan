@@ -330,7 +330,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 @media (max-width: 759px) { .tk.ttr { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; } .tk.ttr .tki { padding: 6px 6px; align-items: center; text-align: center; } .tk.ttr .rl { font-size: 9px; letter-spacing: .02em; white-space: nowrap; } .tk.ttr b { font-size: 14px; } }
 .tk.fos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0 10px; } .tk.fos .tki { padding: 7px 11px; border-radius: 12px; } .tk.fos b { font-size: 18px; }
 @media (max-width: 759px) { .tk.fos .rl { font-size: 10px; letter-spacing: .03em; } .tk.fos b { font-size: 15px; } .tk.fos .rk { font-size: 10.5px; } }
-.rtiles.rshort { margin-top: -6px; } .rtiles.rshort .rtile { text-decoration: none; padding: 6px 14px; gap: 0; border-radius: 12px; } .rtiles.rshort .rtile b { font-size: 18px; line-height: 1.15; } .rtiles.rshort .rtile .rl, .rtiles.rshort .rtile .rs { font-size: 11px; }
+.rtiles.rshort { margin-top: -6px; } .rtiles.rshort .rtile { text-decoration: none; padding: 6px 14px; gap: 0; border-radius: 12px; background: transparent; border-style: dashed; } .rtiles.rshort .rtile b { color: var(--fg2); } .rtiles.rshort .rtile b { font-size: 18px; line-height: 1.15; } .rtiles.rshort .rtile .rl, .rtiles.rshort .rtile .rs { font-size: 11px; }
 @media (max-width: 759px) { .rtiles.rshort .rtile { padding: 5px 10px; } .rtiles.rshort .rtile b { font-size: 15px; } }
 
 </style>
@@ -852,7 +852,7 @@ const paceH = PS => { const y = PS.filter(p => !p.dash), cur = y[y.length - 1], 
 /* records courts mesurés au GPS de la montre (fetch_sprint.py), sous les 5 / 10 / semi */
 const SPR = [['100', '100 m', '⚡'], ['400', '400 m', '🏟️'], ['1000', '1 000 m', '🔥']];
 const fTd = s => { const m = Math.floor(s / 60), r = (s - 60 * m).toFixed(1).replace('.', '″'); return m ? `${m}′${r.padStart(4, '0')}` : r; };   // dixièmes : 15″1, 1′07″8
-const sprH = ([k, l, e]) => { const r = (D.sprint || {})[k]; return r ? `<a class="rtile" href="${STRAVA}${r[3]}" target="_blank" rel="noopener" title="${esc(r[2])}"><span class="rl">${ico(e)}${l}</span><b>${k === '1000' ? fT(Math.round(r[0])) : fTd(r[0])}</b><span class="rs">${fmtD(dn(r[1]), true)} · GPS ↗</span></a>` : ''; };
+const sprH = ([k, l, e]) => { const r = (D.sprint || {})[k]; return r ? `<a class="rtile" href="${STRAVA}${r[3]}" target="_blank" rel="noopener" title="${esc(r[2])}"><span class="rl">${ico(e)}${l}</span><b>${k === '1000' ? fT(Math.round(r[0])) : fTd(r[0])}</b><span class="rs">${fmtD(dn(r[1]), true)}</span></a>` : ''; };
 function renderRecords(app) {
   const d = RDIST[S.rec] ? S.rec : '21', cfg = RDIST[d], C = cfg.c, K = REC.K[d], L = RR.filter(r => r.d === d), cur = L.find(r => r.cur), byT = [...L].sort((a, b) => a.t - b.t);
   const first = L.filter(r => !r.watch)[0], ts = L.map(r => r.t);
