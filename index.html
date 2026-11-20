@@ -96,6 +96,8 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .tog.on i { background: var(--acc); } .tog.on i::after { transform: translateX(12px); background: #fff; }
 .tog:disabled { opacity: .4; cursor: not-allowed; }
 @media (max-width: 759px) { .opts > * { flex: 1 1 auto; } .opts .tog { justify-content: space-between; } .opts .seg { display: flex; } .opts .seg button { flex: 1; justify-content: center; } }   /* options sous les périodes : chaque ligne occupe toute la largeur sur téléphone */
+.tog .ts { display: none; }
+@media (max-width: 759px) { .opts.one { flex-wrap: nowrap; gap: 5px; } .opts.one .tog { flex: 1 1 auto; justify-content: center; padding: 7px 6px 3px; font-size: 12px; white-space: nowrap; } .opts.one .tog i { display: none; } .opts.one .tog .e { margin-right: 4px; } .opts.one .tl { display: none; } .opts.one .ts { display: inline; } .opts.one .tog.on { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 14%, var(--card)); } }   /* page Charge : les 3 options sur une ligne (sans interrupteur, l'option active est teintée) */
 .seg { display: inline-flex; align-self: flex-start; max-width: 100%; gap: 2px; padding: 2px; background: var(--card); border: 1px solid var(--line); border-radius: 9px; overflow-x: auto; scrollbar-width: none; }
 .seg::-webkit-scrollbar { display: none; }
 .seg button { display: inline-flex; align-items: center; background: none; border: 0; border-radius: 7px; padding: 7px 10px 3px; font-size: 12.5px; font-weight: 600; color: var(--fg2); white-space: nowrap; }
@@ -1494,7 +1496,7 @@ const deltaH = d => d ? `<span class="delta">${d.dir > 0 ? '<i>▲</i>' : d.dir 
 const rangesH = () => `<div class="ranges" role="group" aria-label="Période">${RANGES.map(r => `<button data-range="${r.id}" class="${r.id === S.range ? 'on' : ''}">${r.l}</button>`).join('')}</div>`;
 const viewsH = (m, cls = '') => m.views ? `<div class="seg ${cls}" role="group" aria-label="Vue">${m.views.map(v => `<button class="${(S.view[m.id] || m.views[0].id) === v.id ? 'on' : ''}" data-view="${v.id}" data-for="${m.id}">${ico(v.ico)}${v.l}</button>`).join('')}</div>` : '';
 const modeH = m => m.modes ? `<div class="seg" role="group" aria-label="Type de graphique">${[['courbe', 'Courbe', '📈'], ['barres', 'Barres', '📊']].map(([k, l, e]) => `<button data-mode="${k}" data-for="${m.id}" class="${modeOf(m) === k ? 'on' : ''}">${ico(e)}${l}</button>`).join('')}</div>` : '';
-const togH = (key, e, label, off) => `<button class="tog${S[key] && !off ? ' on' : ''}" data-tog="${key}" aria-pressed="${!!S[key] && !off}"${off ? ' disabled title="Pas de projection pour cet indicateur"' : ''}>${ico(e)}${label}<i></i></button>`;
+const togH = (key, e, label, off, short) => `<button class="tog${S[key] && !off ? ' on' : ''}" data-tog="${key}" aria-pressed="${!!S[key] && !off}"${off ? ' disabled title="Pas de projection pour cet indicateur"' : ''}>${ico(e)}${short ? `<span class="tl">${label}</span><span class="ts">${short}</span>` : label}<i></i></button>`;
 const sparks = (root, R) => root.querySelectorAll('[data-spark]').forEach(e => draw(e, MID[e.dataset.spark].spec(R, { view: S.view[e.dataset.spark], mode: 'courbe' }), { spark: true, h: 34 }));
 const LOGO = `<svg class="logo" viewBox="0 0 48 48" width="46" height="46" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FC5200"/><stop offset="1" stop-color="#FFB347"/></linearGradient></defs><path d="M14 5H43V34L34 43H5V14Z" fill="url(#lg)" stroke="url(#lg)" stroke-width="4" stroke-linejoin="round"/><path d="M10 30h6l3.5-7 4.5 12 6.5-21 4.5 11h3.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 // liens vers mes comptes (favicons officiels en 32 px, Garmin passé en blanc pour le fond sombre)
@@ -1542,7 +1544,7 @@ function renderIndicateur(app) {
   ${viewsH(m, 'full')}
   <div class="cwrap"><div class="ctot" style="top:${(sp.events || []).length ? 28 : 14}px"><b>${h.val}<small>${h.unit || ''}</small></b>${h.sub ? `<span>${esc(h.sub)}</span>` : ''}</div><div id="a-chart"></div></div>${legend(sp)}
   ${rangesH()}
-  <div class="opts">${R.hasPrev ? togH('compare', '🔁', 'Période précédente') : ''}${togH('races', '🏁', 'Courses')}${togH('sim', '📅', 'Mois suivant', !m.sim)}${modeH(m)}</div>
+  <div class="opts${m.id === 'charge' ? ' one' : ''}">${R.hasPrev ? togH('compare', '🔁', 'Période précédente', false, 'Précédente') : ''}${togH('races', '🏁', 'Courses')}${togH('sim', '📅', 'Mois suivant', !m.sim)}${modeH(m)}</div>
   <section class="card"><h2>Tes progrès en un coup d'œil</h2><p>${esc(h.note || '')}</p></section>
   ${m.id === 'charge' ? fosH() + nlH() : ''}
   <section class="card"><h2>Le reste en bref</h2><div class="brief">${M.filter(x => x.id !== S.m && CHIPS.includes(x.id)).map(x => { const k = x.head(R, stOf(x.id)); return `<button class="brow" data-m="${x.id}"><span class="bt">${ico(x.ico)}${x.short}</span><span class="bs" data-spark="${x.id}"></span><span class="bv"><b>${k.val}<small>${k.unit || ''}</small></b>${k.d && k.d.brief !== false ? deltaH(k.d) : ''}</span></button>`; }).join('')}</div></section>`;
