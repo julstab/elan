@@ -1130,7 +1130,18 @@ function mesureH(m) {
   if (k === 'sl' && d.slh) facts += ' · ' + fmtH(d.slh);
   if (k === 'hrv' && d.hlo) cmt += ` · zone habituelle ${d.hlo}-${d.hhi} : ${d.hrv < d.hlo ? 'en dessous' : d.hrv > d.hhi ? 'au-dessus' : 'dedans'}`;
   const note = MNOTE[k] && NOTES[MNOTE[k]][isoOf(d.x)], t = `${l} <span class="bd">${fmtD(d.x)}</span>`;
-  return note ? bline(m.ico, t, '', esc(note), [facts, cmt].filter(Boolean).join(' · ')) : bline(m.ico, t, facts, cmt, '');   // analyse écrite d'abord, chiffres ensuite
+  return note ? bline(m.ico, t, '', esc(note), [facts, cmt].filter(Boolean).join(' · ')).replace('<p class="bl"', `<p class="bl" data-nuit="${d.d}"`).replace('Toucher pour tout lire', "Toucher pour lire l'analyse de la nuit") : bline(m.ico, t, facts, cmt, '');   // analyse écrite d'abord, chiffres ensuite
+}
+// analyse de la dernière nuit (notes.json : nuits et vfc, clé = date du réveil) : même fenêtre que l'analyse de séance, ouverte au clic sur le bloc Sommeil ou VFC
+function showNuit(iso) {
+  const n = D.days.find(d => d.d === iso); if (!n) return;
+  const tot = [n.sl != null ? [n.sl, 'score / 100'] : null, n.slh ? [fmtH(n.slh), 'de sommeil'] : null, n.hrv != null ? [n.hrv, 'ms de VFC' + (n.hlo ? ` · zone ${n.hlo}-${n.hhi}` : '')] : null].filter(Boolean);
+  let d = document.getElementById('an-dlg');
+  if (!d) { d = document.createElement('dialog'); d.id = 'an-dlg'; document.body.appendChild(d); d.addEventListener('click', e => { if (e.target === d || e.target.closest('.an-x')) d.close(); }); }
+  d.innerHTML = `<button class="an-x" aria-label="Fermer">✕</button><div class="an"><h2>😴 Nuit du ${fmtD(n.x - 1)} au ${fmtD(n.x)}</h2>
+    <div class="wk-t">${tot.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+    ${[['nuits', 'Sommeil'], ['vfc', 'VFC']].map(([k, l]) => NOTES[k][iso] ? `<h3>${l}</h3><p>${esc(NOTES[k][iso])}</p>` : '').join('')}</div>`;
+  d.showModal(); d.scrollTop = 0;
 }
 function semaineH() {
   const W = D.acts.filter(a => a.x >= CUR && a.x <= CUR + 6), run = W.filter(a => RUNS.includes(a.t)), bike = W.filter(a => BIKES.includes(a.t));
@@ -1538,7 +1549,7 @@ function renderIndicateur(app) {
   app.style.setProperty('--mc', m.col);
   const room = app.querySelector('.ctot').offsetHeight + 10;   // marge pour le rayon des points ; la courbe grandit d'autant : le total ne masque plus les données
   draw(app.querySelector('#a-chart'), sp, { h: PCH(240, 330) + room, room }); sparks(app, span(S.range)); if (m.id === 'charge') { drawFos(app.querySelector('#c-fos')); drawNL(app.querySelector('#c-nl')); }
-  app.querySelectorAll('.bl').forEach(p => { const t = e => { if (e.target.closest('a')) return; p.dataset.an ? showAnalyse(p.dataset.an) : p.dataset.wk ? showSemaine() : p.classList.toggle('open'); }; p.addEventListener('click', t); p.addEventListener('keydown', e => { if (e.key === 'Enter') t(e); }); });
+  app.querySelectorAll('.bl').forEach(p => { const t = e => { if (e.target.closest('a')) return; p.dataset.an ? showAnalyse(p.dataset.an) : p.dataset.wk ? showSemaine() : p.dataset.nuit ? showNuit(p.dataset.nuit) : p.classList.toggle('open'); }; p.addEventListener('click', t); p.addEventListener('keydown', e => { if (e.key === 'Enter') t(e); }); });
 }
 
 /* ---------- rendu et interactions ---------- */
