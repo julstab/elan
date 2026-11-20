@@ -1160,7 +1160,7 @@ function showSemaine() {
     ${rest.length ? `<h3>Encore prévu sur Nolio</h3><ul class="wk-l">${rest.map(p => row(p.x, TICO(p.t), p.n, [p.kn ? nf(p.kn, 1) + ' km' : '', p.dp > 150 ? nf(p.dp) + ' m D+' : ''].filter(Boolean).join(' · '))).join('')}</ul>` : ''}</div>`;
   d.showModal(); d.scrollTop = 0;
 }
-const briefH = m => `<section class="brief2${MESURE[m.id] && !MNOTE[MESURE[m.id][0]] ? '' : ' bs'}">${seanceH(m)}</section>${m.id === 'run' ? `<section class="brief2">${semaineH()}</section>` : ''}`;   // analyse sur fond teinté ; bloc Semaine à part, page Course seulement
+const briefH = m => m.id === 'charge' ? `<section class="brief2">${semaineH()}</section>` : `<section class="brief2${MESURE[m.id] && !MNOTE[MESURE[m.id][0]] ? '' : ' bs'}">${seanceH(m)}</section>${m.id === 'run' ? `<section class="brief2">${semaineH()}</section>` : ''}`;   // Charge : la semaine en cours seule ; ailleurs analyse sur fond teinté ; bloc Semaine à part, page Course seulement
 
 /* ---------- page Charge : modèle de Foster (charge de séance = RPE Nolio × durée en min) ----------
    D.foster = [[lundi, charge semaine, monotonie, contrainte, jours actifs, ressenti moyen]] ; monotonie = moyenne / écart-type des 7 charges du jour. */
