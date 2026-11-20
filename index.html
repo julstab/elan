@@ -1485,11 +1485,6 @@ const rangesH = () => `<div class="ranges" role="group" aria-label="Période">${
 const viewsH = (m, cls = '') => m.views ? `<div class="seg ${cls}" role="group" aria-label="Vue">${m.views.map(v => `<button class="${(S.view[m.id] || m.views[0].id) === v.id ? 'on' : ''}" data-view="${v.id}" data-for="${m.id}">${ico(v.ico)}${v.l}</button>`).join('')}</div>` : '';
 const modeH = m => m.modes ? `<div class="seg" role="group" aria-label="Type de graphique">${[['courbe', 'Courbe', '📈'], ['barres', 'Barres', '📊']].map(([k, l, e]) => `<button data-mode="${k}" data-for="${m.id}" class="${modeOf(m) === k ? 'on' : ''}">${ico(e)}${l}</button>`).join('')}</div>` : '';
 const togH = (key, e, label, off) => `<button class="tog${S[key] && !off ? ' on' : ''}" data-tog="${key}" aria-pressed="${!!S[key] && !off}"${off ? ' disabled title="Pas de projection pour cet indicateur"' : ''}>${ico(e)}${label}<i></i></button>`;
-function racesH(R) {
-  const L = RACES.filter(r => r.x >= R.x0 && r.x <= R.x1).reverse();
-  if (!L.length) return '<p class="muted">Aucune course sur la période.</p>';
-  return `<div class="races">${L.map(r => `<div class="race"><span class="rd">${fmtD(r.x)}</span><div>${r.id ? `<a class="rn" href="${STRAVA}${r.id}" target="_blank" rel="noopener">${esc(r.n)} ↗</a>` : `<span class="rn">${esc(r.n)}</span>`}<span class="rk">${nf(r.km, 1)} km${r.dp > 300 ? ' · ' + nf(r.dp) + ' m D+' : ''}</span></div><div><b>${fmtDur(r.el)}</b><span class="rp">${r.lbl === 'Relais' ? '' : fmtPace(r.el / 60 / r.km) + ' /km'}</span></div></div>`).join('')}</div>`;
-}
 const sparks = (root, R) => root.querySelectorAll('[data-spark]').forEach(e => draw(e, MID[e.dataset.spark].spec(R, { view: S.view[e.dataset.spark], mode: 'courbe' }), { spark: true, h: 34 }));
 const LOGO = `<svg class="logo" viewBox="0 0 48 48" width="46" height="46" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FC5200"/><stop offset="1" stop-color="#FFB347"/></linearGradient></defs><path d="M14 5H43V34L34 43H5V14Z" fill="url(#lg)" stroke="url(#lg)" stroke-width="4" stroke-linejoin="round"/><path d="M10 30h6l3.5-7 4.5 12 6.5-21 4.5 11h3.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 // liens vers mes comptes (favicons officiels en 32 px, Garmin passé en blanc pour le fond sombre)
@@ -1540,8 +1535,7 @@ function renderIndicateur(app) {
   <div class="opts">${R.hasPrev ? togH('compare', '🔁', 'Période précédente') : ''}${togH('races', '🏁', 'Courses')}${togH('sim', '📅', 'Mois suivant', !m.sim)}${modeH(m)}</div>
   <section class="card"><h2>Tes progrès en un coup d'œil</h2><p>${esc(h.note || '')}</p></section>
   ${m.id === 'charge' ? fosH() + nlH() : ''}
-  <section class="card"><h2>Le reste en bref</h2><div class="brief">${M.filter(x => x.id !== S.m && CHIPS.includes(x.id)).map(x => { const k = x.head(R, stOf(x.id)); return `<button class="brow" data-m="${x.id}"><span class="bt">${ico(x.ico)}${x.short}</span><span class="bs" data-spark="${x.id}"></span><span class="bv"><b>${k.val}<small>${k.unit || ''}</small></b>${k.d && k.d.brief !== false ? deltaH(k.d) : ''}</span></button>`; }).join('')}</div></section>
-  <section class="card"><h2>Courses</h2>${racesH(R)}</section>`;
+  <section class="card"><h2>Le reste en bref</h2><div class="brief">${M.filter(x => x.id !== S.m && CHIPS.includes(x.id)).map(x => { const k = x.head(R, stOf(x.id)); return `<button class="brow" data-m="${x.id}"><span class="bt">${ico(x.ico)}${x.short}</span><span class="bs" data-spark="${x.id}"></span><span class="bv"><b>${k.val}<small>${k.unit || ''}</small></b>${k.d && k.d.brief !== false ? deltaH(k.d) : ''}</span></button>`; }).join('')}</div></section>`;
   app.style.setProperty('--mc', m.col);
   const room = app.querySelector('.ctot').offsetHeight + 10;   // marge pour le rayon des points ; la courbe grandit d'autant : le total ne masque plus les données
   draw(app.querySelector('#a-chart'), sp, { h: PCH(240, 330) + room, room }); sparks(app, span(S.range)); if (m.id === 'charge') { drawFos(app.querySelector('#c-fos')); drawNL(app.querySelector('#c-nl')); }
