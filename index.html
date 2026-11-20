@@ -257,7 +257,8 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .sbad { font-size: 10.5px; font-weight: 700; color: var(--acc2); border: 1px solid color-mix(in srgb, var(--acc) 50%, transparent); border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 2px; white-space: nowrap; }
 .sbar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 3px 0 2px; } .sbar i { display: block; height: 100%; border-radius: 4px; background: var(--mc); }
 .shoe .rk b { color: var(--fg); }
-.tk.tk2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.shcols { display: flex; flex-direction: column; gap: 14px; } h2 .hn { font-weight: 500; color: var(--fg2); }
+@media (min-width: 760px) { .shcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }   /* chaussures : en service | à la retraite côte à côte sur PC */
 .slogo { display: inline-grid; place-items: center; width: 20px; height: 20px; box-sizing: border-box; padding: 2px; margin-right: 7px; border-radius: 5px; background: #fff; object-fit: contain; vertical-align: -5px; font-size: 11px; font-weight: 800; color: #111; }
 /* vue À venir */
 .anext { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); } .anext h2 { font-size: 20px; } .anext h2 a { color: var(--fg); text-decoration: none; }
@@ -1337,11 +1338,10 @@ const shOffH = s => `<div class="trow"><span class="rd">${toDate(s.x1).getUTCFul
 function renderShoes(app) {
   if (!SH.length) { app.innerHTML = enteteH() + chipsH() + '<p class="muted">Aucune chaussure trouvée sur Strava.</p>'; return; }
   const on = SH.filter(s => !s.ret), off = SH.filter(s => s.ret), paires = n => n + ' paire' + (n > 1 ? 's' : '');
-  const tiles = [['👟', 'En service', paires(on.length)], ['📦', 'À la retraite', paires(off.length)]];
   app.innerHTML = enteteH() + chipsH() + `
-  <div class="tk tk2">${tiles.map(([e, l, v]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b></div>`).join('')}</div>
-  ${on.length ? `<section class="card"><h2>👟 En service</h2>${[...on].sort((a, b) => b.km - a.km).map(s => shoeH(s, Math.max(...on.map(o => o.km)) || 1)).join('')}</section>` : ''}
-  ${off.length ? `<section class="card"><h2>📦 À la retraite</h2><div class="races">${off.map(shOffH).join('')}</div></section>` : ''}
+  <div class="shcols">
+  ${on.length ? `<section class="card"><h2>👟 En service <span class="hn">· ${paires(on.length)}</span></h2>${[...on].sort((a, b) => b.km - a.km).map(s => shoeH(s, Math.max(...on.map(o => o.km)) || 1)).join('')}</section>` : ''}
+  ${off.length ? `<section class="card"><h2>📦 À la retraite <span class="hn">· ${paires(off.length)}</span></h2><div class="races">${off.map(shOffH).join('')}</div></section>` : ''}</div>
   <p class="muted simn">Km, paire par défaut et retraite : réglages de chaque paire sur Strava. « Depuis » = première sortie enregistrée avec la paire ; l’historique Strava est lu depuis 2021.</p>`;
   app.style.setProperty('--mc', '#FC5200');
 }
