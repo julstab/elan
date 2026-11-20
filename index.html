@@ -238,6 +238,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 .trow:first-child { border-top: 0; } .tedi { grid-template-columns: 40px minmax(0, 1fr) auto; padding: 7px 0; border-top: 0; }
 .trow > div, .tedi > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .trow .rr b, .tedi .rr b { font-size: 15px; font-weight: 800; color: var(--fg); }
+@media (max-width: 759px) { .trow.shr { grid-template-columns: 25px minmax(0, 1fr) auto; gap: 8px; } .trow.shr .rd { font-size: 10.5px; } }   /* chaussures à la retraite : colonne des années deux fois plus étroite sur téléphone */
 @media (max-width: 759px) { .rtile { padding: 10px; } .rtile .rl { font-size: 11px; letter-spacing: .04em; } .rtile b { font-size: 19px; } }   /* 3 records sur une ligne */
 @media (max-width: 759px) { .seg.full { display: flex; align-self: stretch; } .seg.full button { flex: 1; justify-content: center; } }   /* Distance | Temps | Dénivelé : toute la largeur sur mobile */
 .seg.tvs { display: flex; align-self: stretch; } .seg.tvs button { flex: 1; justify-content: center; padding: 7px 4px 3px; }
@@ -1338,7 +1339,7 @@ function shoeH(s, mx) {
     <p class="rk">${shKm(s)}</p>
     ${s.ds ? `<p class="rk tsub">${esc(s.ds).replace(/(\d+(?:[.,]\d+)?) ?g(?![a-z])/i, '⚖️ <b>$1 g</b>')}</p>` : ''}</div>`;
 }
-const shOffH = s => `<div class="trow"><span class="rd">${toDate(s.x1).getUTCFullYear()}</span><div><p class="rn">${shLogo(s)}${esc(s.n)}${shTy(s)}</p><p class="rk">${avant21(s) ? 'avant 2021' : moisA(s.x0)} – ${moisA(s.x1)} · ${s.nb} sortie${s.nb > 1 ? 's' : ''}</p></div><div class="rr"><b>${nf(s.km)} km</b></div></div>`;
+const shOffH = s => `<div class="trow shr"><span class="rd">${toDate(s.x1).getUTCFullYear()}</span><div><p class="rn">${shLogo(s)}${esc(s.n)}${shTy(s)}</p><p class="rk">${avant21(s) ? 'avant 2021' : moisA(s.x0)} – ${moisA(s.x1)} · ${s.nb} sortie${s.nb > 1 ? 's' : ''}</p></div><div class="rr"><b>${nf(s.km)} km</b></div></div>`;
 function renderShoes(app) {
   if (!SH.length) { app.innerHTML = enteteH() + chipsH() + '<p class="muted">Aucune chaussure trouvée sur Strava.</p>'; return; }
   const on = SH.filter(s => !s.ret), off = SH.filter(s => s.ret), paires = n => n + ' paire' + (n > 1 ? 's' : '');
