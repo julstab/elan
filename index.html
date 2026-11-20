@@ -33,7 +33,8 @@ h3 { font-size: 15px; font-weight: 700; }
 .muted { color: var(--fg2); font-size: 13px; }
 small { font-size: .5em; font-weight: 700; margin-left: .25em; color: var(--fg); }
 .e { font-size: 1.1em; line-height: 1; margin-right: .4em; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
-.dock button .e, .chip .e { transform: translateY(-.18em); }   /* menus : l'emoji descend sous l'axe du texte, on le remonte */
+button .e, .chip .e, .tog .e { transform: translateY(-.18em); }   /* boutons : l'emoji descend sous l'axe du texte, on le remonte */
+/* Oxanium a plus de place sous la ligne qu'au-dessus : les boutons ont 4 px de marge de plus en haut qu'en bas pour centrer le texte en hauteur */
 
 #app { margin: 0 auto; padding-block: 18px 48px; display: flex; flex-direction: column; gap: 14px; max-width: 1120px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -71,7 +72,7 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .dock { position: sticky; top: max(8px, env(safe-area-inset-top, 0px)); z-index: 30; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px;
   background: rgba(30, 30, 33, .72); -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5);
   border: 1px solid rgba(255, 255, 255, .1); border-radius: 16px; box-shadow: 0 10px 28px rgba(0, 0, 0, .5); }
-.dock button { display: flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: 12px; padding: 9px 4px; font-size: 13.5px; font-weight: 700; letter-spacing: .03em; color: var(--fg2); white-space: nowrap; transition: color .15s, background .15s; }
+.dock button { display: flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: 12px; padding: 11px 4px 7px; font-size: 13.5px; font-weight: 700; letter-spacing: .03em; color: var(--fg2); white-space: nowrap; transition: color .15s, background .15s; }
 .dock button:hover { color: var(--fg); }
 .dock button.on { background: linear-gradient(135deg, var(--acc), #FF7A2E); color: #fff; box-shadow: 0 4px 16px rgba(252, 82, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .25); text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 
@@ -80,15 +81,15 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .chips.scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 34px), transparent); }
 .chips.scroll::-webkit-scrollbar { display: none; }
-.chip { display: inline-flex; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 6px 11px 6px 9px; font-size: 13px; font-weight: 600; letter-spacing: .01em; color: var(--fg2); white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
+.chip { display: inline-flex; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px 4px 9px; font-size: 13px; font-weight: 600; letter-spacing: .01em; color: var(--fg2); white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
 .chip:hover { border-color: #5a5a5f; color: var(--fg); }
 .chip.on { background: color-mix(in srgb, var(--mc, var(--acc)) 16%, transparent); border-color: var(--mc, var(--acc)); color: var(--fg); }
 .ranges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 3px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
-.ranges button { background: none; border: 0; border-radius: 9px; padding: 7px 4px; font-size: 13px; font-weight: 700; color: var(--fg2); white-space: nowrap; }
+.ranges button { background: none; border: 0; border-radius: 9px; padding: 9px 4px 5px; font-size: 13px; font-weight: 700; color: var(--fg2); white-space: nowrap; }
 .ranges button:hover { color: var(--fg); }
 .ranges button.on { background: var(--acc); color: #fff; }
 .opts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.tog { display: inline-flex; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 6px 9px; font-size: 12.5px; font-weight: 600; color: var(--fg2); transition: border-color .15s, color .15s; }
+.tog { display: inline-flex; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 8px 9px 4px; font-size: 12.5px; font-weight: 600; color: var(--fg2); transition: border-color .15s, color .15s; }
 .tog i { position: relative; flex: none; width: 26px; height: 14px; margin-left: 8px; border-radius: 999px; background: #47474c; transition: background .15s; }
 .tog i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: #c9c9c9; transition: transform .15s, background .15s; }
 .tog.on { color: var(--fg); border-color: #5a5a5f; }
@@ -97,10 +98,10 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 @media (max-width: 759px) { .opts > * { flex: 1 1 auto; } .opts .tog { justify-content: space-between; } .opts .seg { display: flex; } .opts .seg button { flex: 1; justify-content: center; } }   /* options sous les périodes : chaque ligne occupe toute la largeur sur téléphone */
 .seg { display: inline-flex; align-self: flex-start; max-width: 100%; gap: 2px; padding: 2px; background: var(--card); border: 1px solid var(--line); border-radius: 9px; overflow-x: auto; scrollbar-width: none; }
 .seg::-webkit-scrollbar { display: none; }
-.seg button { display: inline-flex; align-items: center; background: none; border: 0; border-radius: 7px; padding: 5px 10px; font-size: 12.5px; font-weight: 600; color: var(--fg2); white-space: nowrap; }
+.seg button { display: inline-flex; align-items: center; background: none; border: 0; border-radius: 7px; padding: 7px 10px 3px; font-size: 12.5px; font-weight: 600; color: var(--fg2); white-space: nowrap; }
 .seg button:hover { color: var(--fg); }
 .seg button.on { background: var(--card2); color: var(--fg); }
-.seg.sm button { padding: 3px 8px; font-size: 11.5px; }
+.seg.sm button { padding: 5px 8px 1px; font-size: 11.5px; }
 .simn { font-size: 12px; color: var(--fg3); }
 
 /* chiffres */
@@ -239,7 +240,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 .trow .rr b, .tedi .rr b { font-size: 15px; font-weight: 800; color: var(--fg); }
 @media (max-width: 759px) { .rtile { padding: 10px; } .rtile .rl { font-size: 11px; letter-spacing: .04em; } .rtile b { font-size: 19px; } }   /* 3 records sur une ligne */
 @media (max-width: 759px) { .seg.full { display: flex; align-self: stretch; } .seg.full button { flex: 1; justify-content: center; } }   /* Distance | Temps | Dénivelé : toute la largeur sur mobile */
-.seg.tvs { display: flex; align-self: stretch; } .seg.tvs button { flex: 1; justify-content: center; padding: 5px 4px; }
+.seg.tvs { display: flex; align-self: stretch; } .seg.tvs button { flex: 1; justify-content: center; padding: 7px 4px 3px; }
 a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var(--fg); }
 .rchip.ufull { flex: 1 1 100%; text-align: center; white-space: normal; padding: 7px 12px; font-size: 13.5px; }   /* index UTMB sur toute la largeur (Trails) */
 .tsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .card > p.note { font-size: 13px; color: var(--fg2); margin-top: -4px; }
@@ -249,7 +250,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .trep { padding: 10px 0 4px; border-top: 1px solid var(--line); } .trep:first-of-type { border-top: 0; padding-top: 0; }
 .trep h3 { font-size: 15px; } .ty { font-weight: 800; color: var(--acc2); font-variant-numeric: tabular-nums; }
 .rr .gain, .pj .gain { color: #3DDC97; font-weight: 700; } .rr .loss, .pj .loss { color: #FF6B6B; font-weight: 700; }
-@media (max-width: 480px) { .dock button { flex-direction: column; gap: 1px; padding: 6px 1px; font-size: 10.5px; letter-spacing: 0; } .dock button .e { margin: 0; } }
+@media (max-width: 480px) { .dock button { flex-direction: column; gap: 1px; padding: 8px 1px 4px; font-size: 10.5px; letter-spacing: 0; } .dock button .e { margin: 0; transform: none; } }
 /* vue Chaussures : barre = km de la paire / seuil d'alerte réglé sur Strava */
 .shoe { display: flex; flex-direction: column; gap: 3px; padding: 11px 0; border-top: 1px solid var(--line); } .shoe:first-of-type { border-top: 0; padding-top: 0; }
 .shh { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; } .shh b { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -291,8 +292,8 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 @media (min-width: 760px) and (max-width: 959px) { .chips.ind { gap: 4px; } .chips.ind .chip { font-size: 11.5px; padding-inline: 2px; } .chips.ind .chip .e { margin-right: 3px; } }
 @media (max-width: 759px) {   /* menu de l'Indicateur : grille 5 × 2 d'icônes, tout visible, plus de défilement */
   .chips.ind { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 5px; overflow: visible; margin-inline: 0; padding-inline: 0; -webkit-mask-image: none; mask-image: none; }
-  .chips.ind .chip { flex-direction: column; justify-content: center; gap: 1px; min-width: 0; padding: 4px 1px 3px; border-radius: 10px; line-height: 1.25; font-size: 10.5px; letter-spacing: -.01em; }
-  .chips.ind .chip .e { margin: 0; font-size: 13px; } .chips.ind .chip span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .chips.ind .chip { flex-direction: column; justify-content: center; gap: 1px; min-width: 0; padding: 5px 1px 2px; border-radius: 10px; line-height: 1.25; font-size: 10.5px; letter-spacing: -.01em; }
+  .chips.ind .chip .e { margin: 0; font-size: 13px; transform: none; } .chips.ind .chip span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 }
 .fade { animation: fadein .28s ease-out backwards; }   /* rien ne reste appliqué après le fondu (l'infobulle de la courbe reste au-dessus) */
 @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
