@@ -116,7 +116,11 @@ h1 { font-family: var(--disp); font-size: 27px; font-weight: 800; letter-spacing
 .bl.open { display: block; -webkit-line-clamp: unset; } .bl b { color: var(--fg); font-weight: 700; } .bl b a { color: var(--fg); text-decoration: none; } .bl .bd { color: var(--fg2); font-weight: 500; }
 .bl .bx { color: var(--fg3, var(--fg2)); }
 .bl + .bl { border-top: 1px solid var(--line); padding-top: 6px; }
-.bl.bs { background: color-mix(in srgb, #3FA7F5 13%, transparent); margin: 0 -6px; padding: 5px 8px; border-radius: 8px; } .bl.bs + .bl { border-top: 0; }   /* dernière séance (et son analyse) sur fond teinté, distincte de la ligne Semaine */
+.brief2.bs { background: color-mix(in srgb, #3FA7F5 13%, var(--card)); border-color: color-mix(in srgb, #3FA7F5 30%, var(--line)); }   /* bloc d'analyse (séance, nuit, VFC) teinté en entier */
+.brief2 + .brief2 { margin-top: -6px; }
+.wk-t { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; } .wk-t div { background: var(--card2); border-radius: 10px; padding: 7px 10px; display: flex; flex-direction: column; } .wk-t b { color: var(--fg); font-size: 18px; } .wk-t span { font-size: 12px; color: var(--fg3); }
+.wk-l { list-style: none; padding: 0 !important; } .wk-l li { display: flex; gap: 8px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--line); } .wk-l li + li { margin-top: 0 !important; }
+.wk-j { flex: 0 0 52px; color: var(--fg3); font-size: 12px; } .wk-l a { color: inherit; text-decoration: none; }
 /* fenêtre d'analyse complète d'une séance, ouverte au clic sur la ligne « Dernière séance » */
 #an-dlg { width: min(680px, calc(100vw - 24px)); max-height: 86vh; max-height: 86dvh; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--fg2); }
 #an-dlg::backdrop { background: rgba(0, 0, 0, .65); }
@@ -1095,7 +1099,7 @@ function seanceH(m) {
   const a = [...D.acts].reverse().find(SEANCE[m.id] || SEANCE.heures); if (!a) return '';
   const t = `${esc(a.n)} <span class="bd">${fmtDJ(a.x).replace(/ \d{4}$/, '')}</span>`, note = NOTES.acts[a.id];
   const an = AN[a.id] ? a.id : '';
-  return note ? bline(m.ico, t, '', esc(note), esc(actFacts(a)), an, 'bs') : bline(m.ico, t, esc(actFacts(a)), esc(actAuto(a)), '', an, 'bs');   // analyse écrite d'abord, chiffres ensuite
+  return note ? bline(m.ico, t, '', esc(note), esc(actFacts(a)), an) : bline(m.ico, t, esc(actFacts(a)), esc(actAuto(a)), '', an);   // analyse écrite d'abord, chiffres ensuite
 }
 // analyse complète d'une séance (analyses/<id Strava>.md, embarquée au build) : s'ouvre dans une fenêtre au clic sur la ligne.
 // Mise en forme reconnue : titres #, listes à tirets, **gras** ; le titre de tête du fichier est remplacé par celui de la séance.
@@ -1125,8 +1129,7 @@ function mesureH(m) {
   if (k === 'sl' && d.slh) facts += ' · ' + fmtH(d.slh);
   if (k === 'hrv' && d.hlo) cmt += ` · zone habituelle ${d.hlo}-${d.hhi} : ${d.hrv < d.hlo ? 'en dessous' : d.hrv > d.hhi ? 'au-dessus' : 'dedans'}`;
   const note = MNOTE[k] && NOTES[MNOTE[k]][isoOf(d.x)], t = `${l} <span class="bd">${fmtD(d.x)}</span>`;
-  const cls = MNOTE[k] ? 'bs' : '';   // sommeil et VFC : même fond teinté que la dernière séance
-  return note ? bline(m.ico, t, '', esc(note), [facts, cmt].filter(Boolean).join(' · '), '', cls) : bline(m.ico, t, facts, cmt, '', '', cls);   // analyse écrite d'abord, chiffres ensuite
+  return note ? bline(m.ico, t, '', esc(note), [facts, cmt].filter(Boolean).join(' · ')) : bline(m.ico, t, facts, cmt, '');   // analyse écrite d'abord, chiffres ensuite
 }
 function semaineH() {
   const W = D.acts.filter(a => a.x >= CUR && a.x <= CUR + 6), run = W.filter(a => RUNS.includes(a.t)), bike = W.filter(a => BIKES.includes(a.t));
@@ -1138,9 +1141,26 @@ function semaineH() {
   const rest = D.plan.filter(p => p.x <= CUR + 6), next = D.plan.filter(p => p.x > CUR + 6 && p.x <= CUR + 13), nk = sum(next.filter(p => RUNS.includes(p.t)).map(p => p.km));
   const auto = rest.length ? 'encore prévu : ' + rest.map(p => `${JOURS[toDate(p.x).getUTCDay()]} ${p.n}`).join(', ')
     : next.length ? `semaine prochaine sur Nolio : ${next.length} séances${nk ? ', ' + nf(nk) + ' km de course' : ''}` : '';
-  return bline('📅', `Semaine <span class="bd">${fmtD(CUR)} – ${fmtD(CUR + 6)}</span>`, f.join(' · '), esc(NOTES.weeks[isoOf(CUR)] || auto), x.join(' · '));
+  return bline('📅', `Semaine <span class="bd">${fmtD(CUR)} – ${fmtD(CUR + 6)}</span>`, f.join(' · '), esc(NOTES.weeks[isoOf(CUR)] || auto), x.join(' · ')).replace('<p class="bl"', '<p class="bl" data-wk="1"').replace("Toucher pour tout lire", "Toucher pour le détail de la semaine");
 }
-const briefH = m => `<section class="brief2">${seanceH(m)}${m.id === 'run' ? semaineH() : ''}</section>`;   // bloc Semaine sur la page Course seulement
+// détail de la semaine en cours : fenêtre (même boîte que l'analyse) avec totaux, note, séances faites et séances encore prévues sur Nolio
+const TICO = t => RUNS.includes(t) ? (t === 'trail' ? '⛰️' : '🏃') : BIKES.includes(t) ? '🚴' : t === 'renfo' ? '🏋️' : '•';
+function showSemaine() {
+  const W = D.acts.filter(a => a.x >= CUR && a.x <= CUR + 6), run = W.filter(a => RUNS.includes(a.t)), bike = W.filter(a => BIKES.includes(a.t));
+  const rest = D.plan.filter(p => p.x <= CUR + 6), note = NOTES.weeks[isoOf(CUR)], ld = sum(W.map(a => a.ld || 0)), dp = sum(run.map(a => a.dp || 0));
+  const tot = [[`${W.length}`, `séance${W.length > 1 ? 's' : ''}`], [nf(sum(run.map(a => a.km)), 1), 'km de course'], [fmtH(sum(W.map(a => a.mn)) / 60), 'au total'],
+    bike.length ? [nf(sum(bike.map(a => a.km))), 'km de vélo'] : null, dp ? [nf(dp), 'm D+'] : null, ld ? [nf(ld), 'de charge'] : null].filter(Boolean);
+  const row = (x, i, n, f, href) => `<li><span class="wk-j">${JOURS[toDate(x).getUTCDay()]} ${toDate(x).getUTCDate()}</span>${ico(i)}<span><b>${href ? `<a href="${href}" target="_blank" rel="noopener">${esc(n)}</a>` : esc(n)}</b>${f ? `<br><span class="muted">${esc(f)}</span>` : ''}</span></li>`;
+  let d = document.getElementById('an-dlg');
+  if (!d) { d = document.createElement('dialog'); d.id = 'an-dlg'; document.body.appendChild(d); d.addEventListener('click', e => { if (e.target === d || e.target.closest('.an-x')) d.close(); }); }
+  d.innerHTML = `<button class="an-x" aria-label="Fermer">✕</button><div class="an"><h2>📅 Semaine du ${fmtD(CUR)} au ${fmtD(CUR + 6)}</h2>
+    <div class="wk-t">${tot.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+    ${note ? `<p>${esc(note)}</p>` : ''}
+    <h3>Fait</h3>${W.length ? `<ul class="wk-l">${W.map(a => row(a.x, TICO(a.t), a.n, actFacts(a), a.id ? STRAVA + a.id : '')).join('')}</ul>` : '<p class="muted">Rien pour l’instant.</p>'}
+    ${rest.length ? `<h3>Encore prévu sur Nolio</h3><ul class="wk-l">${rest.map(p => row(p.x, TICO(p.t), p.n, [p.kn ? nf(p.kn, 1) + ' km' : '', p.dp > 150 ? nf(p.dp) + ' m D+' : ''].filter(Boolean).join(' · '))).join('')}</ul>` : ''}</div>`;
+  d.showModal(); d.scrollTop = 0;
+}
+const briefH = m => `<section class="brief2${MESURE[m.id] && !MNOTE[MESURE[m.id][0]] ? '' : ' bs'}">${seanceH(m)}</section>${m.id === 'run' ? `<section class="brief2">${semaineH()}</section>` : ''}`;   // analyse sur fond teinté ; bloc Semaine à part, page Course seulement
 
 /* ---------- page Charge : modèle de Foster (charge de séance = RPE Nolio × durée en min) ----------
    D.foster = [[lundi, charge semaine, monotonie, contrainte, jours actifs, ressenti moyen]] ; monotonie = moyenne / écart-type des 7 charges du jour. */
@@ -1517,7 +1537,7 @@ function renderIndicateur(app) {
   app.style.setProperty('--mc', m.col);
   const room = app.querySelector('.ctot').offsetHeight + 10;   // marge pour le rayon des points ; la courbe grandit d'autant : le total ne masque plus les données
   draw(app.querySelector('#a-chart'), sp, { h: PCH(240, 330) + room, room }); sparks(app, span(S.range)); if (m.id === 'charge') { drawFos(app.querySelector('#c-fos')); drawNL(app.querySelector('#c-nl')); }
-  app.querySelectorAll('.bl').forEach(p => { const t = e => { if (e.target.closest('a')) return; p.dataset.an ? showAnalyse(p.dataset.an) : p.classList.toggle('open'); }; p.addEventListener('click', t); p.addEventListener('keydown', e => { if (e.key === 'Enter') t(e); }); });
+  app.querySelectorAll('.bl').forEach(p => { const t = e => { if (e.target.closest('a')) return; p.dataset.an ? showAnalyse(p.dataset.an) : p.dataset.wk ? showSemaine() : p.classList.toggle('open'); }; p.addEventListener('click', t); p.addEventListener('keydown', e => { if (e.key === 'Enter') t(e); }); });
 }
 
 /* ---------- rendu et interactions ---------- */
