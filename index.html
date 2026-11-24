@@ -261,6 +261,7 @@ a.rchip { color: var(--fg2); text-decoration: none; } a.rchip:hover { color: var
 .sbar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 3px 0 2px; } .sbar i { display: block; height: 100%; border-radius: 4px; background: var(--mc); }
 .shoe .rk b { color: var(--fg); }
 .sty { font-size: 10.5px; font-weight: 700; color: #6FB8FF; background: color-mix(in srgb, #3FA7F5 16%, transparent); border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 2px; white-space: nowrap; } .sty.trail { color: #5BD68F; background: color-mix(in srgb, #3DDC97 16%, transparent); }   /* badge route / trail */
+.shhd { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; } .shhd h2 { margin: 0; }
 .shcols { display: flex; flex-direction: column; gap: 14px; } h2 .hn, h3 .hn { font-weight: 500; color: var(--fg2); }
 .rn.snl { display: flex; align-items: center; min-width: 0; overflow-wrap: normal; } .snl .snm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .snl .slogo, .snl .sty, .snl .sbad { flex: none; vertical-align: 0; }   /* nom de chaussure sur une seule ligne */
 .shh .rn.snl { flex: 1 1 auto; } .trow.shr > div { min-width: 0; }
@@ -1338,7 +1339,7 @@ const shLogo = s => { const k = (s.b || '').toLowerCase().replace(/[^a-z]/g, '')
 const TRAILM = /trail|mafate|sense|genesis|cascadia|tecton|prodigio|speedgoat|ultra ?glide/i;
 const isTrail = s => TRAILM.test(s.n) || (s.kt || 0) > (s.kr || 0);
 const shTy = s => isTrail(s) ? '<span class="sty trail">Trail</span>' : '<span class="sty">Route</span>';
-// paire en service : logo + nom + km, barre proportionnelle à la paire la plus usée, puis le détail (ancienneté, sorties, km par terrain)
+// paire en service (par défaut de la plus récemment utilisée à la plus ancienne, ou par km avec le bouton) : logo + nom + km, barre proportionnelle à la paire la plus usée, puis le détail (ancienneté, sorties, km par terrain)
 function shoeH(s, mx) {
   return `<div class="shoe"><div class="shh"><p class="rn snl" title="${esc(s.n)}">${shLogo(s)}<span class="snm">${esc(s.n)}</span>${shTy(s)}${s.pri ? '<span class="sbad">par défaut</span>' : ''}</p><b>${nf(s.km)} km</b></div>
     <div class="sbar" role="img" aria-label="${nf(s.km)} km"><i style="width:${(s.km / mx * 100).toFixed(1)}%"></i></div>
@@ -1352,7 +1353,7 @@ function renderShoes(app) {
   const on = SH.filter(s => !s.ret), off = SH.filter(s => s.ret), paires = n => n + ' paire' + (n > 1 ? 's' : '');
   app.innerHTML = enteteH() + chipsH() + `
   <div class="shcols">
-  ${on.length ? `<section class="card"><h2>👟 En service <span class="hn">· ${paires(on.length)}</span></h2>${[...on].sort((a, b) => b.km - a.km).map(s => shoeH(s, Math.max(...on.map(o => o.km)) || 1)).join('')}</section>` : ''}
+  ${on.length ? `<section class="card"><div class="shhd"><h2>👟 En service <span class="hn">· ${paires(on.length)}</span></h2>${togH('shkm', '📏', 'Trier par km')}</div>${[...on].sort((a, b) => S.shkm ? b.km - a.km : b.x1 - a.x1 || b.km - a.km).map(s => shoeH(s, Math.max(...on.map(o => o.km)) || 1)).join('')}</section>` : ''}
   ${off.length ? `<section class="card"><h2>📦 À la retraite <span class="hn">· ${paires(off.length)}</span></h2>${[['Trail', '⛰️', 1], ['Route', '🛣️', 0]].map(([l, e, tr]) => { const L = off.filter(s => isTrail(s) == tr); return L.length ? `<h3 class="shcat">${ico(e)}${l} <span class="hn">· ${paires(L.length)}</span></h3><div class="races">${L.map(shOffH).join('')}</div>` : ''; }).join('')}</section>` : ''}</div>
   <p class="muted simn">Km, paire par défaut et retraite : réglages de chaque paire sur Strava. « Depuis » = première sortie enregistrée avec la paire ; l’historique Strava est lu depuis 2021.</p>`;
   app.style.setProperty('--mc', '#FC5200');
