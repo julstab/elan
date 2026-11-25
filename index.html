@@ -1500,10 +1500,10 @@ function renderAllures(app) {
 /* ---------- état ---------- */
 const VUES = [['indicateur', 'Indicateurs', '🎯'], ['records', 'Records', '🏆'], ['trails', 'Trails', '⛰️'], ['agenda', 'À venir', '🎽']];
 const S = { ver: 'indicateur', range: '3m', races: true, compare: false, sim: false, m: 'run', rec: '21', tv: 'km', view: {}, mode: {} };
-try { const p = JSON.parse(localStorage.getItem('tableau-forme') || '{}'); if (p.range) S.range = p.range; if (p.ver) S.ver = p.ver; if (p.m && (MID[p.m] && !['heures', 'vo2'].includes(p.m) || p.m === 'chaussures' || p.m === 'allures')) S.m = p.m; if (p.sim) S.sim = true; if (p.rec) S.rec = p.rec; } catch (e) {}
+try { const p = JSON.parse(localStorage.getItem('tableau-forme') || '{}'); if (p.range) S.range = p.range; if (p.ver) S.ver = p.ver; if (p.m && (MID[p.m] && !['heures', 'vo2'].includes(p.m) || p.m === 'chaussures' || p.m === 'allures')) S.m = p.m; if (p.sim) S.sim = true; if (p.rec) S.rec = p.rec; if (p.view) Object.entries(p.view).forEach(([k, v]) => { const m = MID[k]; if (m && m.views && m.views.some(x => x.id === v)) S.view[k] = v; }); } catch (e) {}
 const hv = (location.hash || '').replace('#', ''); if (VUES.some(v => v[0] === hv)) S.ver = hv;
 if (!VUES.some(v => v[0] === S.ver)) S.ver = 'indicateur';
-const save = () => { try { localStorage.setItem('tableau-forme', JSON.stringify({ range: S.range, ver: S.ver, m: S.m, sim: S.sim, rec: S.rec })); } catch (e) {} };
+const save = () => { try { localStorage.setItem('tableau-forme', JSON.stringify({ range: S.range, ver: S.ver, m: S.m, sim: S.sim, rec: S.rec, view: S.view })); } catch (e) {} };
 const stOf = id => ({ view: S.view[id], mode: S.mode[id], compare: S.compare });
 function specOf(m, R, extra) {
   const sp = m.spec(R, Object.assign(stOf(m.id), extra));
