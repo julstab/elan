@@ -476,13 +476,27 @@ const VN = { id: 'n', l: 'Séances', ms: 1, val: () => 1, fmt: v => nf(v, v % 1 
 // tonnage d'un renfo (squat + soulevé de terre, séries × reps × kg lues dans la description Garmin) : compté sur le 1er renfo du jour
 const TONA = (() => { const t = {}, o = {}; (D.lifts || []).forEach(l => { const v = (l.sq ? l.sq.ton : 0) + (l.dl ? l.dl.ton : 0); if (v) t[l.d] = (t[l.d] || 0) + v; });
   D.acts.forEach(a => { if (a.t === 'renfo' && t[a.d]) { o[a.id] = t[a.d]; delete t[a.d]; } }); return o; })();
-const VTN = { id: 'ton', l: 'Tonnage', tot: 'Tonnage squat + soulevé de terre', val: a => TONA[a.id] || 0, fmt: v => nf(v) + ' kg', ax: v => v >= 1000 ? nf(v / 1000, v % 1000 ? 1 : 0) + ' t' : nf(v), big: v => [nf(v), 'kg'] };
+const VTN = { id: 'ton', l: 'Tonnage', per: true, tot: 'Tonnage par séance (squat + soulevé de terre)', val: a => TONA[a.id] || 0, fmt: v => nf(v) + ' kg', ax: v => v >= 1000 ? nf(v / 1000, v % 1000 ? 1 : 0) + ' t' : nf(v), big: v => [nf(v), 'kg'] };
 function weeklyM(id, title, stacks, views, c = {}) {
   const any = a => stacks.some(s => s.pred(a));
+  // vue « par séance » (tonnage du renfo) : un point par séance au lieu d'un total par semaine
+  const sess = (v, a0, a1) => D.acts.filter(a => any(a) && a.x >= a0 && a.x <= a1 && v.val(a)).map(a => ({ x: a.x, v: v.val(a) }));
+  const perSpec = (R, s, v) => { const sp = { dom: [R.x0, R.xe], fmt: v.fmt, ax: v.ax, zero: true, lines: [{ name: v.tot, color: colOf(id), w: 2.5, area: true, dots: true, tol: 3.5, pts: sess(v, R.x0, R.x1) }] };
+    if (s.compare && R.hasPrev) sp.lines.push({ name: 'Période précédente', color: GRY, dash: true, w: 1.5, prev: true, dots: true, tol: 3.5, pts: sess(v, R.p0, R.x0 - 1).map(p => ({ x: p.x + 7 * R.w, v: p.v })) });
+    return sp; };
+  const perHead = (R, v) => { const P = sess(v, R.x0, R.x1);
+    if (!P.length) return { lbl: v.l + ' par séance', val: '–', unit: '', sub: R.on, note: `Aucune séance avec ${v.l.toLowerCase()} ${R.on}.` };
+    const avg = sum(P.map(p => p.v)) / P.length, last = P[P.length - 1], best = P.reduce((a, b) => b.v > a.v ? b : a), [val, unit] = v.big(avg);
+    const h = { lbl: v.l + ' moyen par séance', val, unit, sub: 'moyenne par séance ' + R.on };
+    h.note = `${P.length} séance${P.length > 1 ? 's' : ''} ${R.on}, ${v.fmt(avg)} en moyenne. Dernière : ${v.fmt(last.v)} le ${fmtD(last.x)} ; plus grosse : ${v.fmt(best.v)} le ${fmtD(best.x)}`.replace(/\.?$/, '.');
+    if (R.hasPrev) { const Q = sess(v, R.p0, R.x0 - 1); if (Q.length) { const pa = sum(Q.map(q => q.v)) / Q.length, pct = (avg - pa) / pa * 100;
+      h.d = { txt: nf(Math.abs(pct)) + ' %', dir: Math.sign(Math.round(pct)), lbl: 'par rapport ' + R.prevLbl }; h.note += ` Moyenne de la période précédente : ${v.fmt(pa)}.`; } }
+    return h; };
   const V = s => views.find(x => x.id === (s && s.view)) || views[0];
   return {
     id, title, short: c.short || title, views: views.length > 1 ? views : null, modes: !c.fixed, weekly: true, sim: true,
     spec(R, s = {}) {
+      if (V(s).per) return perSpec(R, s, V(s));
       const v = V(s), N = R.w + R.ws, xs = Array.from({ length: N }, (_, i) => R.x0 + 7 * i);
       const st = stacks.map(k => ({ name: k.name, color: k.color, vals: weekly(R.x0, N, k.pred, v.val).map(p => p.v), pv: R.ws ? weekly(R.x0, N, k.pred, v.val, D.plan).map((p, i) => i < R.w ? 0 : p.v) : null }));
       const sp = { dom: [R.x0, R.xe], fmt: v.fmt, ax: v.ax, ms: v.ms, detail: c.detail, zero: true, weekly: true, lp: any, lines: [] };
@@ -496,6 +510,7 @@ function weeklyM(id, title, stacks, views, c = {}) {
       return sp;
     },
     head(R, s = {}) {
+      if (V(s).per) return perHead(R, V(s));
       const v = V(s), wk = weekly(R.x0, R.w, any, v.val), cur = sum(wk.map(p => p.v));
       const [val, unit] = v.big(cur), h = { lbl: 'Total – ' + v.l, val, unit, sub: R.on };
       const best = wk.reduce((a, b) => b.v > a.v ? b : a, wk[0]);
@@ -1500,7 +1515,7 @@ const ico = e => e ? `<span class="e" aria-hidden="true">${e}</span>` : '';
 const deltaH = d => d ? `<span class="delta">${d.dir > 0 ? '<i>▲</i>' : d.dir < 0 ? '<i>▼</i>' : ''}${esc(d.txt)}</span>` : '';
 const rangesH = () => `<div class="ranges" role="group" aria-label="Période">${RANGES.map(r => `<button data-range="${r.id}" class="${r.id === S.range ? 'on' : ''}">${r.l}</button>`).join('')}</div>`;
 const viewsH = (m, cls = '') => m.views ? `<div class="seg ${cls}" role="group" aria-label="Vue">${m.views.map(v => `<button class="${(S.view[m.id] || m.views[0].id) === v.id ? 'on' : ''}" data-view="${v.id}" data-for="${m.id}">${ico(v.ico)}${v.l}</button>`).join('')}</div>` : '';
-const modeH = m => m.modes ? `<div class="seg" role="group" aria-label="Type de graphique">${[['courbe', 'Courbe', '📈'], ['barres', 'Barres', '📊']].map(([k, l, e]) => `<button data-mode="${k}" data-for="${m.id}" class="${modeOf(m) === k ? 'on' : ''}">${ico(e)}${l}</button>`).join('')}</div>` : '';
+const modeH = m => m.modes && !(m.views && (m.views.find(v => v.id === S.view[m.id]) || {}).per) ? `<div class="seg" role="group" aria-label="Type de graphique">${[['courbe', 'Courbe', '📈'], ['barres', 'Barres', '📊']].map(([k, l, e]) => `<button data-mode="${k}" data-for="${m.id}" class="${modeOf(m) === k ? 'on' : ''}">${ico(e)}${l}</button>`).join('')}</div>` : '';
 const togH = (key, e, label, off, short) => `<button class="tog${S[key] && !off ? ' on' : ''}" data-tog="${key}" aria-pressed="${!!S[key] && !off}"${off ? ' disabled title="Pas de projection pour cet indicateur"' : ''}>${ico(e)}${short ? `<span class="tl">${label}</span><span class="ts">${short}</span>` : label}<i></i></button>`;
 const sparks = (root, R) => root.querySelectorAll('[data-spark]').forEach(e => draw(e, MID[e.dataset.spark].spec(R, { view: S.view[e.dataset.spark], mode: 'courbe' }), { spark: true, h: 34 }));
 const LOGO = `<svg class="logo" viewBox="0 0 48 48" width="46" height="46" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FC5200"/><stop offset="1" stop-color="#FFB347"/></linearGradient></defs><path d="M14 5H43V34L34 43H5V14Z" fill="url(#lg)" stroke="url(#lg)" stroke-width="4" stroke-linejoin="round"/><path d="M10 30h6l3.5-7 4.5 12 6.5-21 4.5 11h3.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
