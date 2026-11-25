@@ -473,6 +473,10 @@ const VDP = { id: 'dp', l: 'Dénivelé', ico: '⛰️', val: a => a.dp, fmt: v =
 const VLD = { id: 'ld', l: 'Charge', val: a => a.ld, fmt: v => nf(v), ax: v => nf(v), big: v => [nf(v), 'pts'] };
 const VN = { id: 'n', l: 'Séances', ms: 1, val: () => 1, fmt: v => nf(v, v % 1 ? 1 : 0) + ' séance' + (v >= 2 ? 's' : ''), ax: v => nf(v), big: v => [nf(v), v >= 2 ? 'séances' : 'séance'] };
 
+// tonnage d'un renfo (squat + soulevé de terre, séries × reps × kg lues dans la description Garmin) : compté sur le 1er renfo du jour
+const TONA = (() => { const t = {}, o = {}; (D.lifts || []).forEach(l => { const v = (l.sq ? l.sq.ton : 0) + (l.dl ? l.dl.ton : 0); if (v) t[l.d] = (t[l.d] || 0) + v; });
+  D.acts.forEach(a => { if (a.t === 'renfo' && t[a.d]) { o[a.id] = t[a.d]; delete t[a.d]; } }); return o; })();
+const VTN = { id: 'ton', l: 'Tonnage', tot: 'Tonnage squat + soulevé de terre', val: a => TONA[a.id] || 0, fmt: v => nf(v) + ' kg', ax: v => v >= 1000 ? nf(v / 1000, v % 1000 ? 1 : 0) + ' t' : nf(v), big: v => [nf(v), 'kg'] };
 function weeklyM(id, title, stacks, views, c = {}) {
   const any = a => stacks.some(s => s.pred(a));
   const V = s => views.find(x => x.id === (s && s.view)) || views[0];
@@ -485,7 +489,7 @@ function weeklyM(id, title, stacks, views, c = {}) {
       const mode = c.fixed || s.mode || c.mode || 'courbe', tot = i => sum(st.map(k => k.vals[i])), ptot = i => sum(st.map(k => k.pv[i]));
       if (mode === 'barres') sp.bars = { xs, stacks: st.filter(k => k.vals.some(Boolean) || (k.pv && k.pv.some(Boolean))) };
       else {
-        sp.lines.push({ name: c.tot || title, color: colOf(id), w: 2.5, area: true, dots: R.w <= 26, tol: 3.5, pts: xs.slice(0, R.w).map((x, i) => ({ x: x + 3, v: tot(i) })) });
+        sp.lines.push({ name: v.tot || c.tot || title, color: colOf(id), w: 2.5, area: true, dots: R.w <= 26, tol: 3.5, pts: xs.slice(0, R.w).map((x, i) => ({ x: x + 3, v: tot(i) })) });
         if (R.ws) sp.lines.push({ name: 'Prévu sur Nolio', color: colOf(id), w: 2.5, dash: true, plan: true, dots: R.w <= 26, tol: 3.5, pts: xs.slice(R.w - 1).map((x, j) => { const i = R.w - 1 + j; return { x: x + 3, v: tot(i) + ptot(i), skip: !j && !ptot(i) }; }) });
       }
       if (s.compare && R.hasPrev) sp.lines.push({ name: 'Période précédente', color: GRY, dash: true, w: 1.5, prev: true, tol: 3.5, pts: weekly(R.p0, R.w, any, v.val).map(p => ({ x: p.x + 3 + 7 * R.w, v: p.v })) });
@@ -576,7 +580,7 @@ const M = [
     b: dailyM('slh', 'Durée de sommeil', 'slh', { fmt: fmtH, ax: v => nf(v, 1) + ' h', avg: true, raw: 'Nuit' }),
     spec(R, s = {}) { return (s.view === 'slh' ? this.b : this.a).spec(R, s); }, head(R, s = {}) { return (s.view === 'slh' ? this.b : this.a).head(R, s); }
   },
-  weeklyM('renfo', 'Renfo', [{ name: 'Renfo', color: COL.renfo, pred: a => a.t === 'renfo' }], [VN], { tot: 'Séances de renfo', detail: true }),
+  weeklyM('renfo', 'Renfo', [{ name: 'Renfo', color: COL.renfo, pred: a => a.t === 'renfo' }], [VN, VTN], { tot: 'Séances de renfo', detail: true }),
 ];
 const ICO = { run: '🏃', velo: '🚴', heures: '⏱️', charge: '🔥', vo2: '🫁', vfc: '💓', sommeil: '😴', renfo: '🏋️' };
 M.forEach(m => { m.ico = ICO[m.id] || ''; m.col = COL[m.id] || O; });
