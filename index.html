@@ -238,6 +238,7 @@ i.gh { background: color-mix(in srgb, var(--c) 30%, transparent); border: 1px da
 .tki .rl { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--fg2); }
 .tki b { font-size: 23px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .trow, .tedi { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; align-items: baseline; }
+.tstn { margin: 8px 0 0; font-size: 13.5px; color: var(--fg2); } .tstn b { color: var(--fg); font-size: 16px; }
 .trow .tnote { grid-column: 2 / -1; margin-top: -4px; }
 .trow:first-child { border-top: 0; } .tedi { grid-template-columns: 40px minmax(0, 1fr) auto; padding: 7px 0; border-top: 0; }
 .trow > div, .tedi > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -1059,6 +1060,7 @@ function renderTrails(app) {
   <div class="tk ttr">${tiles.map(([e, l, v]) => `<div class="tki"><span class="rl">${ico(e)}${l}</span><b>${v}</b></div>`).join('')}</div>
   <div class="rchips">${UI.general ? `<a class="rchip ufull" href="${D.utmb.url}" target="_blank" rel="noopener" aria-label="Index UTMB ${UI.general}"><span class="ui ug"><img src="${UIMG('index', 1)}" alt="UTMB Index"><b>${UI.general}</b></span>${['20k', '50k', '100k', '100m'].filter(k => UI[k]).map(k => `<span class="ui"><img src="${UIMG(UCAT[k] + '_bg')}" alt="${UCAT[k]}"><b>${UI[k]}</b></span>`).join('')}<span class="ua">↗</span></a>` : ''}</div>
   <section class="card"><h2>📈 Au fil des années</h2><div class="seg tvs" role="group" aria-label="Mesure">${TV.filter(t => L.some(r => t.val(r) != null)).map(t => `<button data-tv="${t.id}" class="${t === tv ? 'on' : ''}" aria-pressed="${t === tv}">${ico(t.ico)}${t.l}</button>`).join('')}</div>
+    ${tv.id === 'us' && L.some(r => r.ubu && r.rs) ? `<p class="tstn">💎 <b>${sum(L.filter(r => r.ubu).map(r => r.rs || 0))}</b> Running Stones récoltées sur ${L.filter(r => r.ubu).length} courses by UTMB</p>` : ''}
     <div id="t-chart"></div>
     <div class="legend">${TCLS.map(c => `<span><i class="pt" style="--c:${c.c}"></i>${c.l}</span>`).join('')}</div></section>
   <section class="card"><h2>📋 Tous les trails</h2>${Object.keys(Y).sort().reverse().map(y => `<div class="tyh"><h3>${y}</h3><span>${tot(Y[y])}</span></div><div class="races">${[...Y[y]].reverse().map(trowH).join('')}</div>`).join('')}</section>
